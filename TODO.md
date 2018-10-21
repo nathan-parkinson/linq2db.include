@@ -13,3 +13,13 @@
 
 * Implement ToLookup
 * Implement isSlowQuery (In\TempTable)
+
+
+* Is Queryable<TCHild> WHERE ANY(Queryable<TParent> JOIN Queryable<TChild>)
+	stll the best thing to do?
+	is it now better to have different queries depending on 
+		* normal
+		* slow\in
+		* slow\temp table
+
+* Add optional Filter Expression to Include functionality
