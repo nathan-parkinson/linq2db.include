@@ -79,6 +79,31 @@ namespace LinqToDB.Utils
             return parentEntities;
         }
 
+        public static int MakeHashCode<T>(int val, T property)
+        {
+            if (property != null)
+            {
+                unchecked
+                {
+                    val = val * 23 + property.GetHashCode();
+                }
+            }
 
+            return val;
+        }
+
+        public static Expression<Func<T, int>> CreateHashCodeExpression<T>() where T : class
+        {
+            var param2 = Expression.Parameter(typeof(T), "p");
+            Expression exp = Expression.Constant(17, typeof(int));
+
+            foreach (var property in typeof(T).GetProperties())
+            {
+                exp = Expression.Call(typeof(EntityPropertySetter), nameof(MakeHashCode), new Type[] { property.PropertyType }, exp, Expression.Property(param2, property));
+            }
+
+            var func = Expression.Lambda<Func<T, int>>(exp, param2);
+            return func;
+        }
     }
 }
