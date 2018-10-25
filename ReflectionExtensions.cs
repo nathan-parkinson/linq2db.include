@@ -30,6 +30,11 @@ namespace LinqToDB.Utils
         {
             if (type.IsGenericType)
             {
+                if (type.IsInterface)
+                {
+                    return type.GetGenericTypeDefinition().GetInterfaces().Any(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>));                    
+                }
+
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
 
                 return genericTypeDefinition.GetInterfaces()
@@ -43,6 +48,14 @@ namespace LinqToDB.Utils
         {
             if (type.IsGenericType)
             {
+                if (type.IsInterface)
+                {
+                    var def = type.GetGenericTypeDefinition();
+
+                    return def == typeof(ICollection<>) ||
+                        def.GetInterfaces().Any(x => x.GetGenericTypeDefinition() == typeof(ICollection<>));
+                }
+
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
 
                 return genericTypeDefinition.GetInterfaces()
@@ -65,32 +78,50 @@ namespace LinqToDB.Utils
             return action.Compile();
         }
 
-
-        internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(this Type elementType, string propertyName, Type propertyType)
+        internal static Action<TElement, ICollection<TValue>> CreateICollectionPropertySetter<TElement, TValue>(this Type elementType, string propertyName)
         {
             var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-
-
             var mi = pi.GetSetMethod();
 
             var oParam = Expression.Parameter(elementType, "obj");
-            var vParam = Expression.Parameter(typeof(TValue), "val");
-            var mce = Expression.Call(Expression.Property(oParam, propertyName), propertyType.GetMethod("Add"), vParam);
-            //var mce = Expression.Call(oParam, mi, vParam);
-            var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
+            var vParam = Expression.Parameter(typeof(ICollection<TValue>), "val");
+            var mce = Expression.Call(oParam, mi, vParam);
+
+            var clearMethod = Expression.Call(vParam, typeof(ICollection<TValue>).GetMethod("Clear"));
+            var ifCriteria = Expression.Equal(Expression.Call(oParam, pi.GetGetMethod()), Expression.Constant(null));
+            var ifnullSetter = Expression.IfThenElse(ifCriteria, mce, clearMethod);
+
+            var action = Expression.Lambda<Action<TElement, ICollection<TValue>>>(ifnullSetter, oParam, vParam);
 
             return action.Compile();
         }
 
-        static LambdaExpression CreateLambda(Type type)
+
+        internal static Action<TElement,ICollection<TValue>> CreateIEnumerablePropertySetter<TElement, TValue>(this Type elementType, string propertyName)
         {
-            var source = Expression.Parameter(
-                typeof(IEnumerable<>).MakeGenericType(type), "source");
+            var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            var mi = pi.GetSetMethod();
 
-            var call = Expression.Call(
-                typeof(Enumerable), "Last", new Type[] { type }, source);
+            var oParam = Expression.Parameter(elementType, "obj");
+            var vParam = Expression.Parameter(typeof(ICollection<TValue>), "val");
+            var mce = Expression.Call(oParam, mi, vParam);
+            var action = Expression.Lambda<Action<TElement, ICollection<TValue>>>(mce, oParam, vParam);
 
-            return Expression.Lambda(call, source);
+            return action.Compile();
         }
+
+
+        internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(this Type elementType, string propertyName, Type propertyType)
+        {
+            var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);            
+            var mi = pi.GetSetMethod();
+
+            var oParam = Expression.Parameter(elementType, "obj");
+            var vParam = Expression.Parameter(typeof(TValue), "val");
+            var mce = Expression.Call(Expression.Property(oParam, propertyName), typeof(ICollection<TValue>).GetMethod("Add"), vParam);
+            var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
+
+            return action.Compile();
+        }        
     }
 }
