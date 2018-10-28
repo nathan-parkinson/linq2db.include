@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace LinqToDB.Utils
@@ -21,12 +23,11 @@ namespace LinqToDB.Utils
 
             if (schema.IsPropertyICollection)
             {
-                var setter = schema.ParentType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName, schema.PropertyType);
-                var ifnullSetter = schema.ParentType.CreateICollectionPropertySetter<TParent, TChild>(schema.PropertyName);
+                var setter = schema.ParentType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName, schema.PropertyType);                
+                var ifnullSetter = schema.ParentType.CreatePropertySetup<TParent, TChild>(schema.PropertyName);
                 foreach (var item in parentEntities)
-                {
-                    //NEED TO FIGURE OUT WHAT ICOLLECTION TYPE TO PASS INTO FUNCTION BELOW
-                    ifnullSetter(item, new System.Collections.ObjectModel.Collection<TChild>());
+                {                    
+                    ifnullSetter(item);
 
                     foreach (var childEntity in childLookup[parentHasher(item)])
                     {
@@ -61,7 +62,7 @@ namespace LinqToDB.Utils
 
             return val;
         }
-
+        
         public static Expression<Func<T, int>> CreateHashCodeExpression<T>(string[] propertyNames) where T : class
         {
             var param2 = Expression.Parameter(typeof(T), "p");
