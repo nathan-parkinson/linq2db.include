@@ -1,24 +1,24 @@
-﻿* Move to own project  
+﻿
+
+
+
 * Make Equal Expressions handle castable objects (e.g int? == int, int == long etc.)
+* Add ExpressionPredicate\Predicate to joins
+	Need to figure out the difference between these 2 properties
 
-* Handle ICollection<TChild> instantiation
-* Can IsICollection be more efficient
-* Work out the type of object to pass into ifnullSetter
-
+* Implement Include\ThenInclude
+* Make entire querybuilder into a compiled func so different queries can use the same func
+* Store comiled funcs in a cache (ConcurrentDictionary)
+	Use AssociationDescriptor.GetHashCode() as the Key
+* Allow for inheritance in Include functions (e.g. Include(x => (LetTransaction)x.Transactions) or Include(x => x.Transactions).OfType<LetTransaction>())
 
 
 
 * Implement isSlowQuery (In\TempTable)
-
-
-* Is Queryable<TCHild> WHERE ANY(Queryable<TParent> JOIN Queryable<TChild>)
-	stll the best thing to do?
-	is it now better to have different queries depending on 
-		* normal
-		* slow\in
-		* slow\temp table
-
 * Add optional Filter Expression to Include functionality
+
+
+
 
 
 	
