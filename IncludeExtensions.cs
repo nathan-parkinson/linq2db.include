@@ -119,23 +119,29 @@ namespace LinqToDB.Utils
     }
 
 
-    public abstract class EntityLoader
+    public abstract class EntityLoader<TEntity> where TEntity : class
     {
         protected readonly bool _isRootItem;
-        protected readonly List<EntityLoader> _propertyEntityLoaders = new List<EntityLoader>();
-        protected readonly IQueryable _query;
+        protected readonly List<EntityLoader<TEntity>> _propertyEntityLoaders = new List<EntityLoader<TEntity>>();
+        protected readonly IQueryable<TEntity> _query;
 
-        public EntityLoader(IQueryable query, bool isRootItem)
+        public EntityLoader(IQueryable<TEntity> query, bool isRootItem)
         {
             _query = query;
             _isRootItem = isRootItem;
         }
     }
 
-    public class EntityLoader<TEntity, TPreviousProperty> : EntityLoader where TEntity : class where TPreviousProperty : class
+    public class EntityLoader<TEntity, TPreviousProperty> : EntityLoader<TEntity> where TEntity : class where TPreviousProperty : class
     {        
-        public EntityLoader(IQueryable query, Expression<Func<TEntity, TPreviousProperty>> expr, bool isRootItem = false) : base(query, isRootItem)
+        public EntityLoader(IQueryable<TEntity> query, Expression<Func<TEntity, TPreviousProperty>> expr, bool isRootItem = false) : base(query, isRootItem)
         {        
+            //TODO
+            //if property is nested then allow for a nested search into the _propertyEntityLoaders to get\create the parent entity loader
+            //and add the expr to it
+
+            //also, create a generic version of EntityBuilderSchema so that we can pass items and IQueryable into it and process them properly
+
             var propertyInfo = GetPropertyInfo(expr);
             var dbContext = query.GetDataContext<Data.DataConnection>();
             dynamic context = dbContext;
@@ -153,9 +159,7 @@ namespace LinqToDB.Utils
             if (expr.Body is MethodCallExpression)
             {
                 var methodCall = expr.Body as MethodCallExpression;
-                var propertyExpr = methodCall.Arguments.FirstOrDefault() as MemberExpression;
-
-                if (propertyExpr == null)
+                if (!(methodCall.Arguments.FirstOrDefault() is MemberExpression propertyExpr))
                 {
                     propertyExpr = methodCall.Object as MemberExpression;
                 }
