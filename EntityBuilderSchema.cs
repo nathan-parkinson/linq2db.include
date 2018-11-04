@@ -5,16 +5,36 @@ namespace LinqToDB.Utils
 {
     class EntityBuilderSchema
     {
-        internal Type ParentType { get; set; }
-        internal Type PropertyType { get; set; }
-        internal Type ChildEntityType { get; set; }
-        internal string PropertyName { get; set; }
+        internal EntityBuilderSchema()
+        {
 
-        internal bool IsPropertyIEnumerable { get; set; }
-        internal bool IsPropertyICollection { get; set; }
-        internal bool IsChildEntityIEnumerable { get; set; }
+        }
 
-        internal EntityDescriptor ParentEntityDescriptor { get; set; }
-        internal AssociationDescriptor ParentToChildAssociationDescriptor { get; set; }
+        internal EntityBuilderSchema(string propertyName, Type entityType, Type propertyType, Type parentType, EntityDescriptor parentDesc, AssociationDescriptor assoc)
+        {
+            PropertyName = propertyName;
+            ChildEntityType = entityType;
+            PropertyType = propertyType;
+            ParentType = parentType;
+
+            IsPropertyICollection = propertyType.IsICollection();
+            IsPropertyIEnumerable = propertyType.IsIEnumerable();
+            IsChildEntityIEnumerable = entityType.IsIEnumerable();
+
+            ParentEntityDescriptor = parentDesc;
+            ParentToChildAssociationDescriptor = assoc;
+        }
+
+        internal Type ParentType { get; }
+        internal Type PropertyType { get; }
+        internal Type ChildEntityType { get; }
+        internal string PropertyName { get; }
+
+        internal bool IsPropertyIEnumerable { get; }
+        internal bool IsPropertyICollection { get; }
+        internal bool IsChildEntityIEnumerable { get; }
+
+        internal EntityDescriptor ParentEntityDescriptor { get; }
+        internal AssociationDescriptor ParentToChildAssociationDescriptor { get; }
     }
 }
