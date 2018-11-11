@@ -117,8 +117,14 @@ namespace LinqToDB.Utils
             BinaryExpression previousExpr = null;
             for (int i = 0; i < assoc.ThisKey.Length; i++)
             {
-                MemberExpression childProperty = Expression.Property(childParam, assoc.OtherKey[i]);
-                MemberExpression parentProperty = Expression.Property(parentParam, assoc.ThisKey[i]);
+                Expression childProperty = Expression.Property(childParam, assoc.OtherKey[i]);
+                Expression parentProperty = Expression.Property(parentParam, assoc.ThisKey[i]);
+
+                if(childProperty.Type != parentProperty.Type)
+                {
+                    parentProperty = Expression.Convert(parentProperty, childProperty.Type);
+                }
+
                 var equals = Expression.Equal(childProperty, parentProperty);
                 if (previousExpr == null)
                 {
