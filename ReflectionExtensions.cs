@@ -145,7 +145,7 @@ namespace LinqToDB.Utils
             }
 
             Expression newCollection = null;
-            if (collectionTypeToCreate.IsGenericType)
+            if (collectionTypeToCreate.IsGenericTypeDefinition)
             {
                 newCollection = Expression.New(collectionTypeToCreate.MakeGenericType(new Type[] { typeof(TChild) }));
             }
