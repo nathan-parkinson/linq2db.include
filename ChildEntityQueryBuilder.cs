@@ -47,7 +47,7 @@ namespace LinqToDB.Utils
 
             MethodCallExpression innerWhere = Expression.Call(
                 queryableType,
-                "Where",
+                nameof(Enumerable.Where),
                 new Type[] { schema.ChildEntityType },
                 new Expression[]
                 {
@@ -58,13 +58,13 @@ namespace LinqToDB.Utils
 
             // build x.Where( pe2 => innerWhere ).Any()
             MethodCallExpression anyCall = Expression.Call(
-                queryableType, "Any", new Type[] { schema.ChildEntityType }, innerWhere
+                queryableType, nameof(Enumerable.Any), new Type[] { schema.ChildEntityType }, innerWhere
             );
 
             // build x.Where( pe1 => anyCall )
             MethodCallExpression outerWhere = Expression.Call(
                 queryableType,
-                "Where",
+                nameof(Enumerable.Where),
                 new Type[] { schema.ChildEntityType },
                 new Expression[]
                 {
