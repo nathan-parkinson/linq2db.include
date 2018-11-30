@@ -34,7 +34,7 @@ namespace LinqToDB.Utils
         protected Type _memberType;
         protected Type _memberEntityType;
         protected bool _isMemberTypeICollection;
-        
+        protected bool _isMemberEntityTypeIEnumerable;
 
         internal abstract void Load(List<TClass> entities, IQueryable<TClass> query);
 
@@ -42,7 +42,9 @@ namespace LinqToDB.Utils
         public Type DeclaringType { get => _declaringType; }
         public Type MemberType { get => _memberType; }
         public Type MemberEntityType { get => _memberEntityType; }
+
         public bool IsMemberTypeICollection { get => _isMemberTypeICollection; }
+        public bool IsMemberEntityTypeIEnumerable { get => _isMemberEntityTypeIEnumerable; }
 
         public abstract HashSet<IPropertyAccessor> Properties { get; }
 
@@ -68,7 +70,9 @@ namespace LinqToDB.Utils
             _memberType = exp.Type;
             _memberEntityType = typeof(TProperty);
             _isMemberTypeICollection = _memberType.IsICollection();
-            
+            _isMemberEntityTypeIEnumerable = _memberEntityType.IsIEnumerable(); 
+
+
             var parentDesc = mappingSchema.GetEntityDescriptor(DeclaringType);
             AssociationDescriptor = parentDesc.Associations.Single(x => x.MemberInfo.Name == PropertyName);
         }
@@ -93,7 +97,10 @@ namespace LinqToDB.Utils
 
 
             //get query
+            //TODO Change this to get a simpler query for execution and create another method to create a 
+            //reusable query for nested properties
             var propertyQuery = GetQuery(query);
+
             //run query into list
             var propertyEntities = propertyQuery.ToList();
             

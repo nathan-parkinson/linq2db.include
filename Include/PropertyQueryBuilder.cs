@@ -16,7 +16,7 @@ namespace LinqToDB.Utils
             where TParent : class 
             where TChild : class
         {        
-            if (schema.MemberEntityType.IsIEnumerable())
+            if (schema.IsMemberEntityTypeIEnumerable)
             {
                 throw new ArgumentException($"'{nameof(TChild)}' cannot be an IEnumerable<>.");
             }
@@ -26,13 +26,10 @@ namespace LinqToDB.Utils
 
             var mainQueryCopy = mainQuery;
             var db = mainQuery.GetDataContext<IDataContext>();
-
-            var parentDesc = db.MappingSchema.GetEntityDescriptor(schema.DeclaringType);
-            var parentToChildAssociationDescriptor = parentDesc.Associations.Single(x => x.MemberInfo.Name == schema.PropertyName);
-
+            
 
             //join the query passed in to the child table
-            var joinExpr = BuildJoinExpression<TParent, TChild>(parentToChildAssociationDescriptor, schema);
+            var joinExpr = BuildJoinExpression<TParent, TChild>(schema);
             var subSelect = db.GetTable<TChild>().Join(mainQueryCopy, SqlJoinType.Inner, joinExpr, (c, p) => c);
 
             //TODO subSelect can be kept and used for loading data nested deeper than ChildProperty
@@ -117,12 +114,13 @@ namespace LinqToDB.Utils
             return innerCondition;
         }
 
-        private static Expression<Func<TChild, TParent, bool>> BuildJoinExpression<TParent, TChild>(AssociationDescriptor assoc, PropertyAccessor<TParent, TChild> schema)
+        private static Expression<Func<TChild, TParent, bool>> BuildJoinExpression<TParent, TChild>(PropertyAccessor<TParent, TChild> schema)
             where TParent : class
             where TChild : class
         {            
             var childParam = Expression.Parameter(schema.MemberEntityType, "c");
             var parentParam = Expression.Parameter(schema.DeclaringType, "p");
+            var assoc = schema.AssociationDescriptor;
 
             BinaryExpression previousExpr = null;
             for (int i = 0; i < assoc.ThisKey.Length; i++)
