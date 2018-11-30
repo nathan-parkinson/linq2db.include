@@ -114,7 +114,7 @@ namespace LinqToDB.Utils
 
     public static class IncludeHelper
     {        
-        public static EntityLoader<TEntity, TProperty> Include<TEntity, TProperty>(this IQueryable<TEntity> query, Expression<Func<TEntity, TProperty>> expr) where TEntity : class where TProperty : class
+        public static EntityLoader<TEntity, TProperty> IncludeOld<TEntity, TProperty>(this IQueryable<TEntity> query, Expression<Func<TEntity, TProperty>> expr) where TEntity : class where TProperty : class
             => new EntityLoader<TEntity, TProperty>(query, expr, true);       
     }
 
@@ -176,7 +176,7 @@ namespace LinqToDB.Utils
             throw new ArgumentException($"Could not get PropertyInfo for {expr.ToString()}");
         }        
 
-        public EntityLoader<TEntity, TProperty> Include<TProperty>(Expression<Func<TEntity, TProperty>> expr) where TProperty : class
+        public EntityLoader<TEntity, TProperty> IncludeOld<TProperty>(Expression<Func<TEntity, TProperty>> expr) where TProperty : class
         {
             var entityLoader = new EntityLoader<TEntity, TProperty>(_query, expr);
             _propertyEntityLoaders.Add(entityLoader);
