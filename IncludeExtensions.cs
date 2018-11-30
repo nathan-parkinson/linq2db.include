@@ -85,11 +85,11 @@ namespace LinqToDB.Utils
     {
         static class Cache<T> where T : class, IDataContext
         {
-            internal static readonly ConcurrentDictionary<PropertyInfo, EntityBuilderSchema> DictionaryCache = new ConcurrentDictionary<PropertyInfo, EntityBuilderSchema>();
+            internal static readonly ConcurrentDictionary<MemberInfo, EntityBuilderSchema> DictionaryCache = new ConcurrentDictionary<MemberInfo, EntityBuilderSchema>();
             internal static int MappingSchemaHashCode;
         }
-
-        internal static EntityBuilderSchema Get<T>(this T context, PropertyInfo property) where T : class, IDataContext
+        
+        internal static EntityBuilderSchema Get<T>(this T context, MemberInfo member) where T : class, IDataContext
         {
             var schema = new EntityBuilderSchema();
             if(Cache<T>.MappingSchemaHashCode != context.MappingSchema.GetHashCode())
@@ -99,7 +99,7 @@ namespace LinqToDB.Utils
             }
 
 
-            if(Cache<T>.DictionaryCache.TryGetValue(property, out schema))
+            if(Cache<T>.DictionaryCache.TryGetValue(member, out schema))
             {
                 return schema;
             }
