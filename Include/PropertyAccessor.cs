@@ -99,17 +99,22 @@ namespace LinqToDB.Utils
             //get query
             //TODO Change this to get a simpler query for execution and create another method to create a 
             //reusable query for nested properties
-            var propertyQuery = GetQuery(query);
+            var propertyQuery = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
 
             //run query into list
             var propertyEntities = propertyQuery.ToList();
-            
 
+            IQueryable<TProperty> reusableQuery = null;
             //run nested properties
             foreach (var propertyAccessor in PropertiesOfTClass)
             {
+                if(reusableQuery == null)
+                {
+                    reusableQuery = PropertyQueryBuilder.BuildReusableQueryableForProperty(query, this);
+                }
+
                 var accessorImpl = (PropertyAccessor<TProperty>)propertyAccessor;
-                accessorImpl.Load(propertyEntities, propertyQuery);
+                accessorImpl.Load(propertyEntities, reusableQuery);
             }
 
             //set values to entities           
@@ -118,15 +123,6 @@ namespace LinqToDB.Utils
         }
         
         internal AssociationDescriptor AssociationDescriptor { get; }
-        
-        IQueryable<TProperty> GetQuery(IQueryable<TClass> query)
-        {
-            //TODO change this to create a func to convert any query
-            //and then cache the func
-            var queryable = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
-            return queryable;
-        }
-
     }
     
 }
