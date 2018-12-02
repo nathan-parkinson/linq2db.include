@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace LinqToDB.Utils
 {
-    public static class IncludeExtensions
+    public static class IncludeExtensionsOld
     {
         public static async Task<List<T>> ToListAsync<T, U>(this IQueryable<T> query, Expression<Func<T, U>> include, bool isSlowQuery = false) where T : class where U : class
         {
@@ -148,7 +148,7 @@ namespace LinqToDB.Utils
             var schema = SchemaCache.Get(context, propertyInfo);
             if (schema == null)
             {
-                schema = IncludeExtensions.GetPropertyParts(expr, dbContext.MappingSchema);
+                schema = IncludeExtensionsOld.GetPropertyParts(expr, dbContext.MappingSchema);
                 SchemaCache.Set(context, propertyInfo, schema);
             }
 
