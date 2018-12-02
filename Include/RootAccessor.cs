@@ -18,7 +18,7 @@ namespace LinqToDB.Utils
         {
             var thisPath = pathParts.First();
 
-            //TODO get by Type and PropertyName to account for multiple inherited calsses with same PropertyName
+            //TODO get by Type and PropertyName to account for multiple inherited classes with same PropertyName
             var accessor = Properties.SingleOrDefault(x => x.PropertyName == thisPath);
             if(accessor == null)
             {

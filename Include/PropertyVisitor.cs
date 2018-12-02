@@ -10,13 +10,7 @@ namespace LinqToDB.Utils
     {
         private IPropertyAccessor latestAccessor;
         private readonly IRootAccessor<TClass> _rootAccessor;
-        /*
-        internal PropertyVisitor()
-        {
-            _rootAccessor = new RootAccessor<TClass>();
-        }
-        */
-
+        
         internal PropertyVisitor(IRootAccessor<TClass> rootAccessor)
         {
             _rootAccessor = rootAccessor;
