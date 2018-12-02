@@ -1,6 +1,5 @@
 ﻿using LinqToDB.Async;
 using LinqToDB.Linq;
-using LinqToDB.Mapping;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,19 +7,11 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace LinqToDB.Utils
 {
-
-    public interface IIncludableQueryable<TClass> : IExpressionQuery<TClass> where TClass : class
-    {
-        IIncludableQueryable<TClass> AddExpression<TProperty>(Expression<Func<TClass, TProperty>> expr) 
-            where TProperty : class;
-    }
-
     public class IncludableQueryable<T> : IIncludableQueryable<T> where T : class
     {
         private readonly IRootAccessor<T> _rootAccessor;
@@ -72,7 +63,7 @@ namespace LinqToDB.Utils
 
         public Expression Expression => LinqToDBQuery.Expression;
 
-        public IQueryProvider Provider => this;// LinqToDBQuery.Provider;
+        public IQueryProvider Provider => this;
 
 
         public IDataContext DataContext => LinqToDBQuery.DataContext;
@@ -84,7 +75,7 @@ namespace LinqToDB.Utils
         }
 
 
-        IQueryProvider IQueryable.Provider => this;// LinqToDBQuery.Provider;
+        IQueryProvider IQueryable.Provider => this;
         Expression IQueryable.Expression => LinqToDBQuery.Expression;
         Type IQueryable.ElementType => LinqToDBQuery.ElementType;
 
@@ -112,7 +103,7 @@ namespace LinqToDB.Utils
             //object instantiatedType =
             //  Activator.CreateInstance(typeToInstantiate, flags, null, parameter, culture);
 
-            var parameters = new object[0];
+            object[] parameters = null;
             if (typeof(TElement) == typeof(T))
             {
                 parameters = new object[]
@@ -142,14 +133,11 @@ namespace LinqToDB.Utils
 
         TResult IQueryProvider.Execute<TResult>(Expression expression)
             => LinqToDBQuery.Execute<TResult>(expression);
+        
 
-
-        //TODO change the 2 methods below to convert to list and then add all the child items
-        //then return  list.GetEnumerator();
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             var entities = LinqToDBQuery.ToList();
-
             _rootAccessor.LoadMap(entities, this);
 
             return entities.GetEnumerator();
@@ -158,7 +146,6 @@ namespace LinqToDB.Utils
         IEnumerator IEnumerable.GetEnumerator()
         {
             var entities = LinqToDBQuery.ToList();
-
             _rootAccessor.LoadMap(entities, this);
 
             return ((IEnumerable)entities).GetEnumerator();
@@ -204,7 +191,7 @@ namespace LinqToDB.Utils
 
 
 
-    public static class IncludeExtensions2
+    public static class IncludeExtensions
     {
         public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IQueryable<TClass> query, Expression<Func<TClass, TProperty>> expr)
             where TClass : class
