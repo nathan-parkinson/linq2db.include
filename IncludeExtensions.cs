@@ -151,7 +151,6 @@ namespace LinqToDB.Utils
                 schema = IncludeExtensionsOld.GetPropertyParts(expr, dbContext.MappingSchema);
                 SchemaCache.Set(context, propertyInfo, schema);
             }
-
         }
 
         private static PropertyInfo GetPropertyInfo<T, U>(Expression<Func<T, U>> expr) where T : class where U : class

@@ -72,9 +72,9 @@ namespace LinqToDB.Utils
             _isMemberTypeICollection = _memberType.IsICollection();
             _isMemberEntityTypeIEnumerable = _memberEntityType.IsIEnumerable(); 
 
-
-            var parentDesc = mappingSchema.GetEntityDescriptor(DeclaringType);
-            AssociationDescriptor = parentDesc.Associations.Single(x => x.MemberInfo.Name == PropertyName);
+            ChildEntityDescriptor = mappingSchema.GetEntityDescriptor(_memberEntityType);
+            ParentEntityDescriptor = mappingSchema.GetEntityDescriptor(DeclaringType);
+            AssociationDescriptor = ParentEntityDescriptor.Associations.Single(x => x.MemberInfo.Name == PropertyName);
         }
         
         public override HashSet<IPropertyAccessor> Properties
@@ -123,6 +123,8 @@ namespace LinqToDB.Utils
         }
         
         internal AssociationDescriptor AssociationDescriptor { get; }
+        internal EntityDescriptor ParentEntityDescriptor { get; }
+        internal EntityDescriptor ChildEntityDescriptor { get; }
     }
     
 }
