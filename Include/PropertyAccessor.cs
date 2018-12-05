@@ -19,7 +19,7 @@ namespace LinqToDB.Utils
 
             if (parentAccessor != null && !newAccessor.Properties.Contains(parentAccessor))
             {
-                var genericParentAccessor = (PropertyAccessor<TProperty>)parentAccessor;
+                var genericParentAccessor = (IPropertyAccessor<TProperty>)parentAccessor;
                 newAccessor.PropertiesOfTClass.Add(genericParentAccessor);
             }
 
