@@ -70,13 +70,13 @@ namespace LinqToDB.Utils
             _memberType = exp.Type;
             _memberEntityType = typeof(TProperty);
             _isMemberTypeICollection = _memberType.IsICollection();
-            _isMemberEntityTypeIEnumerable = _memberEntityType.IsIEnumerable(); 
+            _isMemberEntityTypeIEnumerable = _memberEntityType.IsIEnumerable();
 
             ChildEntityDescriptor = mappingSchema.GetEntityDescriptor(_memberEntityType);
             ParentEntityDescriptor = mappingSchema.GetEntityDescriptor(DeclaringType);
             AssociationDescriptor = ParentEntityDescriptor.Associations.Single(x => x.MemberInfo.Name == PropertyName);
         }
-        
+
         public override HashSet<IPropertyAccessor> Properties
         {
             get => new HashSet<IPropertyAccessor>(PropertiesOfTClass);
@@ -89,7 +89,6 @@ namespace LinqToDB.Utils
         } = new HashSet<IPropertyAccessor<TProperty>>();
 
 
-        
         internal override void Load(List<TClass> entities, IQueryable<TClass> query)
         {
             //TODO need to check if this is inherited member
@@ -106,25 +105,66 @@ namespace LinqToDB.Utils
 
             IQueryable<TProperty> reusableQuery = null;
             //run nested properties
-            foreach (var propertyAccessor in PropertiesOfTClass)
+            foreach (var propertyAccessor in PropertiesOfTClass.OrderBy(x => x.PropertyName))
             {
-                if(reusableQuery == null)
+                if (reusableQuery == null)
                 {
                     reusableQuery = PropertyQueryBuilder.BuildReusableQueryableForProperty(query, this);
                 }
-
-                var accessorImpl = (PropertyAccessor<TProperty>)propertyAccessor;
-                accessorImpl.Load(propertyEntities, reusableQuery);
+                
+                if (MemberEntityType == propertyAccessor.DeclaringType)
+                {
+                    var accessorImpl = (PropertyAccessor<TProperty>)propertyAccessor;
+                    accessorImpl.Load(propertyEntities, reusableQuery);                    
+                }
+                else if (MemberEntityType.IsAssignableFrom(propertyAccessor.DeclaringType))
+                {
+                    dynamic dynamicAccessor = propertyAccessor;
+                    LoadForInheritedType(dynamicAccessor, propertyEntities, reusableQuery);                    
+                }
+                else
+                {
+                    //TODO Create own exception type and ad a proper message
+                    throw new Exception();
+                }
             }
 
             //set values to entities           
             //TODO change this to a cached Func
             this.SetField(entities, propertyEntities);
         }
-        
+
+
+        private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query) 
+            where T : class
+        {
+            var accessorImpl = (PropertyAccessor<T>)accessor;
+
+            var entitiesOfType = propertyEntities.OfType<T>().ToList();
+            var queryOfType = query.OfType<T>();
+
+            accessorImpl.Load(entitiesOfType, queryOfType);
+        }
+
+
+        private PropertyAccessor<T> CastAsAccessorForInheritedType<T>(IPropertyAccessor<T> accessor) where T : class
+        {
+            return (PropertyAccessor<T>)accessor;
+        }
+
+        private List<T> CastEntitiesToInheritedType<T>(PropertyAccessor<T> accessor, List<TProperty> entities) where T : class
+        {
+            return entities.OfType<T>().ToList();
+        }
+
+        private IQueryable<T> CastQueryToInheritedType<T>(PropertyAccessor<T> accessor, IQueryable<TProperty> query) where T : class
+        {
+            return query.OfType<T>();
+        }
+
         internal AssociationDescriptor AssociationDescriptor { get; }
         internal EntityDescriptor ParentEntityDescriptor { get; }
         internal EntityDescriptor ChildEntityDescriptor { get; }
     }
-    
+
 }

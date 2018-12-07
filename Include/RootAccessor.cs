@@ -1,11 +1,12 @@
 ﻿using LinqToDB.Mapping;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace LinqToDB.Utils
 {
     class RootAccessor<TClass> : IRootAccessor<TClass> where TClass : class
-    {        
+    {
         public RootAccessor(MappingSchema mappingSchema)
         {
             MappingSchema = mappingSchema;
@@ -14,13 +15,13 @@ namespace LinqToDB.Utils
         //TODO Dictionary or HashSet
         public HashSet<IPropertyAccessor<TClass>> Properties { get; } = new HashSet<IPropertyAccessor<TClass>>();
 
-        PropertyAccessor<TEntity, TProperty> IRootAccessor.GetByPath<TEntity, TProperty>(List<string> pathParts)           
+        PropertyAccessor<TEntity, TProperty> IRootAccessor.GetByPath<TEntity, TProperty>(List<string> pathParts)
         {
             var thisPath = pathParts.First();
 
             //TODO get by Type and PropertyName to account for multiple inherited classes with same PropertyName
             var accessor = Properties.SingleOrDefault(x => x.PropertyName == thisPath);
-            if(accessor == null)
+            if (accessor == null)
             {
                 return null;
             }
@@ -34,10 +35,35 @@ namespace LinqToDB.Utils
         {
             foreach (var propertyAccessor in Properties)
             {
-                var propertyImpl = (PropertyAccessor<TClass>)propertyAccessor;
-                propertyImpl.Load(entities, query);
+                if (typeof(TClass) == propertyAccessor.DeclaringType)
+                {
+                    var accessorImpl = (PropertyAccessor<TClass>)propertyAccessor;
+                    accessorImpl.Load(entities, query);
+                }
+                else if (typeof(TClass).IsAssignableFrom(propertyAccessor.DeclaringType))
+                {
+                    dynamic dynamicAccessor = propertyAccessor;
+                    LoadForInheritedType(dynamicAccessor, entities, query);
+                }
+                else
+                {
+                    //TODO Create own exception type and ad a proper message
+                    throw new Exception();
+                }
             }
         }
+
+        private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TClass> propertyEntities, IQueryable<TClass> query)
+            where T : class
+        {
+            var accessorImpl = (PropertyAccessor<T>)accessor;
+
+            var entitiesOfType = propertyEntities.OfType<T>().ToList();
+            var queryOfType = query.OfType<T>();
+
+            accessorImpl.Load(entitiesOfType, queryOfType);
+        }
+
 
         public MappingSchema MappingSchema { get; }
     }
