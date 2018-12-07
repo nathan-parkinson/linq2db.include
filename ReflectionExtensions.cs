@@ -98,20 +98,7 @@ namespace LinqToDB.Utils
             return action.Compile();
         }
 
-        [Obsolete]
-        internal static Action<TElement,ICollection<TValue>> CreateIEnumerablePropertySetter<TElement, TValue>(this Type elementType, string propertyName)
-        {
-            var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-            var mi = pi.GetSetMethod();
-
-            var oParam = Expression.Parameter(elementType, "obj");
-            var vParam = Expression.Parameter(typeof(ICollection<TValue>), "val");
-            var mce = Expression.Call(oParam, mi, vParam);
-            var action = Expression.Lambda<Action<TElement, ICollection<TValue>>>(mce, oParam, vParam);
-
-            return action.Compile();
-        }
-
+        
 
         internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(this Type elementType, string propertyName, Type propertyType)
         {

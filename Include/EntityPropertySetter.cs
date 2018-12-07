@@ -9,7 +9,7 @@ using System.Text;
 
 namespace LinqToDB.Utils
 {
-    static class EntityPropertySetter2
+    static class EntityPropertySetter
     {
         internal static void SetField<TParent, TChild>(this PropertyAccessor<TParent, TChild> schema, IList<TParent> parentEntities, IList<TChild> childEntities)
             where TParent : class
