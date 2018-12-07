@@ -99,6 +99,11 @@ namespace LinqToDB.Utils
             //TODO Change this to get a simpler query for execution and create another method to create a 
             //reusable query for nested properties
             var propertyQuery = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
+            if(propertyFilter != null)
+            {
+                propertyQuery = propertyQuery.Where(propertyFilter);
+            }
+
 
             //run query into list
             var propertyEntities = propertyQuery.ToList();
@@ -110,11 +115,14 @@ namespace LinqToDB.Utils
                 if (reusableQuery == null)
                 {
                     reusableQuery = PropertyQueryBuilder.BuildReusableQueryableForProperty(query, this);
+                    if (propertyFilter != null)
+                    {
+                        reusableQuery = reusableQuery.Where(propertyFilter);
+                    }
                 }
                 
-                if (MemberEntityType == propertyAccessor.DeclaringType)
+                if (propertyAccessor is PropertyAccessor<TProperty> accessorImpl)
                 {
-                    var accessorImpl = (PropertyAccessor<TProperty>)propertyAccessor;
                     accessorImpl.Load(propertyEntities, reusableQuery);                    
                 }
                 else if (MemberEntityType.IsAssignableFrom(propertyAccessor.DeclaringType))
@@ -134,6 +142,25 @@ namespace LinqToDB.Utils
             this.SetField(entities, propertyEntities);
         }
 
+        private Expression<Func<TProperty, bool>> propertyFilter;
+        internal void AddFilter(Expression<Func<TProperty, bool>> expr)
+        {
+            if(propertyFilter == null)
+            {
+                propertyFilter = expr;
+                return;
+            }
+
+            propertyFilter = AddToExpression(propertyFilter, expr);
+        }
+
+        private static Expression<Func<TProperty, bool>> AddToExpression(Expression<Func<TProperty, bool>> expr1,
+                                                       Expression<Func<TProperty, bool>> expr2)
+        {
+            var invokedExpr = Expression.Invoke(expr2, expr1.Parameters.Cast<Expression>());
+            return Expression.Lambda<Func<TProperty, bool>>
+                  (Expression.AndAlso(expr1.Body, invokedExpr), expr1.Parameters);
+        }
 
         private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query) 
             where T : class
@@ -145,23 +172,7 @@ namespace LinqToDB.Utils
 
             accessorImpl.Load(entitiesOfType, queryOfType);
         }
-
-
-        private PropertyAccessor<T> CastAsAccessorForInheritedType<T>(IPropertyAccessor<T> accessor) where T : class
-        {
-            return (PropertyAccessor<T>)accessor;
-        }
-
-        private List<T> CastEntitiesToInheritedType<T>(PropertyAccessor<T> accessor, List<TProperty> entities) where T : class
-        {
-            return entities.OfType<T>().ToList();
-        }
-
-        private IQueryable<T> CastQueryToInheritedType<T>(PropertyAccessor<T> accessor, IQueryable<TProperty> query) where T : class
-        {
-            return query.OfType<T>();
-        }
-
+        
         internal AssociationDescriptor AssociationDescriptor { get; }
         internal EntityDescriptor ParentEntityDescriptor { get; }
         internal EntityDescriptor ChildEntityDescriptor { get; }

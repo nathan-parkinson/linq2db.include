@@ -40,11 +40,11 @@ namespace LinqToDB.Utils
             _rootAccessor = rootAccessor;
         }
 
-        public IIncludableQueryable<T> AddExpression<TProperty>(Expression<Func<T, TProperty>> expr)
+        public IIncludableQueryable<T> AddExpression<TProperty>(Expression<Func<T, TProperty>> expr, Expression<Func<TProperty, bool>> propertyFilter = null)
             where TProperty : class
         {
             var visitor = new PropertyVisitor<T>(_rootAccessor);
-            visitor.MapProperties(expr);
+            visitor.MapProperties(expr, propertyFilter);
             return this;
         }
 
@@ -193,15 +193,15 @@ namespace LinqToDB.Utils
 
     public static class IncludeExtensions
     {
-        public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IQueryable<TClass> query, Expression<Func<TClass, TProperty>> expr)
+        public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IQueryable<TClass> query, Expression<Func<TClass, TProperty>> expr, Expression<Func<TProperty, bool>> propertyFilter = null)
             where TClass : class
             where TProperty : class
-            => new IncludableQueryable<TClass>(query).Include(expr);
+            => new IncludableQueryable<TClass>(query).Include(expr, propertyFilter);
 
-        public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IIncludableQueryable<TClass> includable, Expression<Func<TClass, TProperty>> expr)
+        public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IIncludableQueryable<TClass> includable, Expression<Func<TClass, TProperty>> expr, Expression<Func<TProperty, bool>> propertyFilter = null)
             where TClass : class
             where TProperty : class
-            => includable.AddExpression(expr);
+            => includable.AddExpression(expr, propertyFilter);
 
         /*
         public static List<TClass> ToList<TClass>(this IIncludableQueryable<TClass> includable)

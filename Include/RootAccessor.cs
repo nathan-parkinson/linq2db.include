@@ -35,9 +35,8 @@ namespace LinqToDB.Utils
         {
             foreach (var propertyAccessor in Properties)
             {
-                if (typeof(TClass) == propertyAccessor.DeclaringType)
+                if (propertyAccessor is PropertyAccessor<TClass> accessorImpl)
                 {
-                    var accessorImpl = (PropertyAccessor<TClass>)propertyAccessor;
                     accessorImpl.Load(entities, query);
                 }
                 else if (typeof(TClass).IsAssignableFrom(propertyAccessor.DeclaringType))

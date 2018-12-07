@@ -10,17 +10,46 @@ namespace LinqToDB.Utils
     {
         private IPropertyAccessor latestAccessor;
         private readonly IRootAccessor<TClass> _rootAccessor;
-        
+
         internal PropertyVisitor(IRootAccessor<TClass> rootAccessor)
         {
             _rootAccessor = rootAccessor;
         }
 
-        public IRootAccessor<TClass> MapProperties<TProperty>(Expression<Func<TClass, TProperty>> expr)            
+
+        private static void AddFilterForInheritedType<T, TProperty>(IPropertyAccessor<T> accessor, 
+            Expression<Func<TProperty, bool>> includeFilter)
+            where T : class
+            where TProperty : class
+        {
+            var accessorImpl = (PropertyAccessor<T, TProperty>)accessor;
+            accessorImpl.AddFilter(includeFilter);
+        }
+
+        public IRootAccessor<TClass> MapProperties<TProperty>(Expression<Func<TClass, TProperty>> expr, 
+            Expression<Func<TProperty, bool>> includeFilter = null)
             where TProperty : class
         {
             Visit(expr);
             var accessor = latestAccessor as IPropertyAccessor<TClass>;
+            if (includeFilter != null)
+            {
+                if (latestAccessor is PropertyAccessor<TClass, TProperty> accessorImpl)
+                {
+                    accessorImpl.AddFilter(includeFilter);
+                }
+                else if (typeof(TClass).IsAssignableFrom(latestAccessor.DeclaringType))
+                {
+                    dynamic dynamicAccessor = latestAccessor;
+                    AddFilterForInheritedType(dynamicAccessor, includeFilter);
+                }
+                else
+                {
+                    //TODO Create own exception type and ad a proper message
+                    throw new Exception();
+                }
+            }
+
             //dupes at this point
             if (!_rootAccessor.Properties.Contains(accessor))
             {
