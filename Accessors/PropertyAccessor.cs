@@ -4,63 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
+
 namespace LinqToDB.Utils
 {
-    static class PropertyAccessor
-    {
-        internal static PropertyAccessor<TEntity, TProperty> Create<TEntity, TProperty>
-            (MemberExpression exp, IPropertyAccessor parentAccessor, IRootAccessor root)
-            where TEntity : class
-            where TProperty : class
-        {
-            var pathParts = PathWalker.GetPath(exp);
-            var newAccessor = root.GetByPath<TEntity, TProperty>(pathParts) ??
-                                        new PropertyAccessor<TEntity, TProperty>(exp, root.MappingSchema);
-
-            if (parentAccessor != null && !newAccessor.Properties.Contains(parentAccessor))
-            {
-                var genericParentAccessor = (IPropertyAccessor<TProperty>)parentAccessor;
-                newAccessor.PropertiesOfTClass.Add(genericParentAccessor);
-            }
-
-            return newAccessor;
-        }
-    }
-
-    abstract class PropertyAccessor<TClass> : IPropertyAccessor<TClass> where TClass : class
-    {
-        protected string _propertyName;
-        protected Type _declaringType;
-        protected Type _memberType;
-        protected Type _memberEntityType;
-        protected bool _isMemberTypeICollection;
-        protected bool _isMemberEntityTypeIEnumerable;
-
-        internal abstract void Load(List<TClass> entities, IQueryable<TClass> query);
-
-        public string PropertyName { get => _propertyName; }
-        public Type DeclaringType { get => _declaringType; }
-        public Type MemberType { get => _memberType; }
-        public Type MemberEntityType { get => _memberEntityType; }
-
-        public bool IsMemberTypeICollection { get => _isMemberTypeICollection; }
-        public bool IsMemberEntityTypeIEnumerable { get => _isMemberEntityTypeIEnumerable; }
-
-        public abstract HashSet<IPropertyAccessor> Properties { get; }
-
-        IPropertyAccessor IPropertyAccessor.FindAccessor(List<string> pathParts)
-        {
-            var thisPart = pathParts.FirstOrDefault();
-            if (thisPart == null)
-            {
-                return this;
-            }
-
-            var property = Properties.SingleOrDefault(x => x.PropertyName == thisPart);
-            return property?.FindAccessor(pathParts.Skip(1).ToList());
-        }
-    }
-
     class PropertyAccessor<TClass, TProperty> : PropertyAccessor<TClass> where TClass : class where TProperty : class
     {
         public PropertyAccessor(MemberExpression exp, MappingSchema mappingSchema)
@@ -99,7 +45,7 @@ namespace LinqToDB.Utils
             //TODO Change this to get a simpler query for execution and create another method to create a 
             //reusable query for nested properties
             var propertyQuery = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
-            if(propertyFilter != null)
+            if (propertyFilter != null)
             {
                 propertyQuery = propertyQuery.Where(propertyFilter);
             }
@@ -120,15 +66,15 @@ namespace LinqToDB.Utils
                         reusableQuery = reusableQuery.Where(propertyFilter);
                     }
                 }
-                
+
                 if (propertyAccessor is PropertyAccessor<TProperty> accessorImpl)
                 {
-                    accessorImpl.Load(propertyEntities, reusableQuery);                    
+                    accessorImpl.Load(propertyEntities, reusableQuery);
                 }
                 else if (MemberEntityType.IsAssignableFrom(propertyAccessor.DeclaringType))
                 {
                     dynamic dynamicAccessor = propertyAccessor;
-                    LoadForInheritedType(dynamicAccessor, propertyEntities, reusableQuery);                    
+                    LoadForInheritedType(dynamicAccessor, propertyEntities, reusableQuery);
                 }
                 else
                 {
@@ -145,7 +91,7 @@ namespace LinqToDB.Utils
         private Expression<Func<TProperty, bool>> propertyFilter;
         internal void AddFilter(Expression<Func<TProperty, bool>> expr)
         {
-            if(propertyFilter == null)
+            if (propertyFilter == null)
             {
                 propertyFilter = expr;
                 return;
@@ -162,7 +108,7 @@ namespace LinqToDB.Utils
                   (Expression.AndAlso(expr1.Body, invokedExpr), expr1.Parameters);
         }
 
-        private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query) 
+        private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query)
             where T : class
         {
             var accessorImpl = (PropertyAccessor<T>)accessor;
@@ -172,10 +118,9 @@ namespace LinqToDB.Utils
 
             accessorImpl.Load(entitiesOfType, queryOfType);
         }
-        
+
         internal AssociationDescriptor AssociationDescriptor { get; }
         internal EntityDescriptor ParentEntityDescriptor { get; }
         internal EntityDescriptor ChildEntityDescriptor { get; }
     }
-
 }

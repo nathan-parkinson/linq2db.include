@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace LinqToDB.Utils
 {
-
-    internal class PathWalker : ExpressionVisitor
+    class PathWalker : ExpressionVisitor
     {
         private List<string> _path = new List<string>();
 
@@ -17,7 +16,9 @@ namespace LinqToDB.Utils
 
         }
 
-        internal static List<string> GetPath<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> expr) where TEntity : class where TProperty : class
+        internal static List<string> GetPath<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> expr) 
+            where TEntity : class 
+            where TProperty : class
         {
             var walker = new PathWalker();
             walker.Visit(expr);

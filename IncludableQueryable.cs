@@ -40,7 +40,9 @@ namespace LinqToDB.Utils
             _rootAccessor = rootAccessor;
         }
 
-        public IIncludableQueryable<T> AddExpression<TProperty>(Expression<Func<T, TProperty>> expr, Expression<Func<TProperty, bool>> propertyFilter = null)
+        public IIncludableQueryable<T> AddExpression<TProperty>(
+                Expression<Func<T, TProperty>> expr, 
+                Expression<Func<TProperty, bool>> propertyFilter = null)
             where TProperty : class
         {
             var visitor = new PropertyVisitor<T>(_rootAccessor);
@@ -150,72 +152,5 @@ namespace LinqToDB.Utils
 
             return ((IEnumerable)entities).GetEnumerator();
         }
-    }
-
-
-
-
-
-
-    ////HOW TO DO ThenInclude now :-/
-    //internal class IncludableQueryableOld<TClass> : IIncludableQueryable<TClass> where TClass : class
-    //{
-    //    private readonly IRootAccessor<TClass> _rootAccessor;
-
-    //    internal IncludableQueryableOld(IQueryable<TClass> query)
-    //    {
-    //        var context = query.GetDataContext<IDataContext>();            
-    //        _rootAccessor = new RootAccessor<TClass>(context.MappingSchema);
-    //        Query = query;
-    //    }
-
-    //    public IQueryable<TClass> Query { get; }
-
-    //    public IIncludableQueryable<TClass> AddExpression<TProperty>(Expression<Func<TClass, TProperty>> expr)
-    //        where TProperty : class
-    //    {
-    //        var visitor = new PropertyVisitor<TClass>(_rootAccessor);
-    //        visitor.MapProperties(expr);
-    //        return this;
-    //    }
-
-    //    public List<TClass> LoadEntityMap(IIncludableQueryable<TClass> includable)
-    //    {
-    //        var query = includable.Query;
-    //        var entities = query.ToList();
-    //        _rootAccessor.LoadMap(entities, query);
-
-    //        return entities;
-    //    }
-    //}
-
-
-
-    public static class IncludeExtensions
-    {
-        public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IQueryable<TClass> query, Expression<Func<TClass, TProperty>> expr, Expression<Func<TProperty, bool>> propertyFilter = null)
-            where TClass : class
-            where TProperty : class
-            => new IncludableQueryable<TClass>(query).Include(expr, propertyFilter);
-
-        public static IIncludableQueryable<TClass> Include<TClass, TProperty>(this IIncludableQueryable<TClass> includable, Expression<Func<TClass, TProperty>> expr, Expression<Func<TProperty, bool>> propertyFilter = null)
-            where TClass : class
-            where TProperty : class
-            => includable.AddExpression(expr, propertyFilter);
-
-        /*
-        public static List<TClass> ToList<TClass>(this IIncludableQueryable<TClass> includable)
-            where TClass : class
-        {
-            var includeImpl = includable as IncludableQueryable<TClass>;
-            if(includeImpl == null)
-            {
-                throw new ArgumentException("parameter includable must be of type IncludableQueryable<TClass>");                     
-            }
-            
-            var entities = includeImpl.LoadEntityMap(includable);            
-            return entities;
-        }
-        */
     }
 }

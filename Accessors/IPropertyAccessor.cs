@@ -15,9 +15,4 @@ namespace LinqToDB.Utils
 
         IPropertyAccessor FindAccessor(List<string> pathParts);
     }
-
-    interface IPropertyAccessor<out TClass> : IPropertyAccessor where TClass : class
-    {
-
-    }
 }

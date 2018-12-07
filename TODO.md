@@ -1,21 +1,16 @@
 ﻿
-
-
-
-* Make Equal Expressions handle castable objects (e.g int? == int, int == long etc.)
-* Add ExpressionPredicate\Predicate to joins
-	Need to figure out the difference between these 2 properties
-
-* Implement Include\ThenInclude
+* Allow for overriding of PropertyAccessor for manual mapping
+* Automatically handle back-references
+* Async
+* Add Unit Testing
+* Implement ThenInclude
 * Make entire querybuilder into a compiled func so different queries can use the same func
 * Store comiled funcs in a cache (ConcurrentDictionary)
 	Use AssociationDescriptor.GetHashCode() as the Key
-* Allow for inheritance in Include functions (e.g. Include(x => (LetTransaction)x.Transactions) or Include(x => x.Transactions).OfType<LetTransaction>())
 
 
-
+* Improve setter perfomance when using predicate expression to match parent\child entities
 * Implement isSlowQuery (In\TempTable)
-* Add optional Filter Expression to Include functionality
 
 
 

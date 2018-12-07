@@ -1,16 +1,13 @@
-﻿using LinqToDB;
-using LinqToDB.Mapping;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace LinqToDB.Utils
 {
+    //TODO Reimplement this caching for the nea IPropertyAccessor types
     static class SchemaCache
     {
         static class Cache<T> where T : class, IDataContext
@@ -37,8 +34,9 @@ namespace LinqToDB.Utils
             return null;
         }
 
-        internal static bool Set<T>(this T context, PropertyInfo property, IPropertyAccessor schema) where T : class, IDataContext =>
-            Cache<T>.DictionaryCache.TryAdd(property, schema);
+        internal static bool Set<T>(this T context, PropertyInfo property, IPropertyAccessor schema) 
+            where T : class, IDataContext 
+                => Cache<T>.DictionaryCache.TryAdd(property, schema);
 
     }
 }

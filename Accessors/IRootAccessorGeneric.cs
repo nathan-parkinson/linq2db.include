@@ -1,6 +1,7 @@
-﻿using LinqToDB.Mapping;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace LinqToDB.Utils
 {
@@ -8,12 +9,5 @@ namespace LinqToDB.Utils
     {
         HashSet<IPropertyAccessor<TClass>> Properties { get; }
         void LoadMap(List<TClass> entities, IQueryable<TClass> query);
-    }
-
-
-    interface IRootAccessor
-    {
-        PropertyAccessor<TEntity, TProperty> GetByPath<TEntity, TProperty>(List<string> pathParts) where TEntity : class where TProperty : class;      
-        MappingSchema MappingSchema { get; }
     }
 }

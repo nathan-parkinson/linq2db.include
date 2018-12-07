@@ -97,7 +97,8 @@ namespace LinqToDB.Utils
             var declaringType = GetTypeToUse(node.Member.DeclaringType);
             var nodeType = GetTypeToUse(node.Type);
 
-            if (latestAccessor != null && latestAccessor.DeclaringType == declaringType && latestAccessor.PropertyName == node.Member.Name)
+            if (latestAccessor != null && latestAccessor.DeclaringType == declaringType && 
+                latestAccessor.PropertyName == node.Member.Name)
             {
                 return latestAccessor;
             }
@@ -107,8 +108,11 @@ namespace LinqToDB.Utils
             var param2 = Expression.Parameter(typeof(IPropertyAccessor), "accessor");
             var param3 = Expression.Parameter(typeof(IRootAccessor), "root");
 
-            var methodCallExpression = Expression.Call(typeof(PropertyAccessor), nameof(PropertyAccessor.Create), new Type[] { declaringType, nodeType }, param, param2, param3);
-            var func = Expression.Lambda<Func<MemberExpression, IPropertyAccessor, IRootAccessor, IPropertyAccessor>>(methodCallExpression, param, param2, param3).Compile();
+            var methodCallExpression = Expression.Call(typeof(PropertyAccessor), nameof(PropertyAccessor.Create),
+                new Type[] { declaringType, nodeType }, param, param2, param3);
+
+            var func = Expression.Lambda<Func<MemberExpression, IPropertyAccessor, IRootAccessor, IPropertyAccessor>>(
+                methodCallExpression, param, param2, param3).Compile();
 
             return func(node, latestAccessor, _rootAccessor);
         }

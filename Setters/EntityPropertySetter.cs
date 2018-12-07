@@ -1,17 +1,16 @@
-﻿using LinqToDB.Mapping;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 
 namespace LinqToDB.Utils
 {
     static class EntityPropertySetter
     {
-        internal static void SetField<TParent, TChild>(this PropertyAccessor<TParent, TChild> schema, IList<TParent> parentEntities, IList<TChild> childEntities)
+        internal static void SetField<TParent, TChild>(this PropertyAccessor<TParent, TChild> schema, 
+                IList<TParent> parentEntities, 
+                IList<TChild> childEntities)
             where TParent : class
             where TChild : class
         {
@@ -25,7 +24,10 @@ namespace LinqToDB.Utils
         }
 
 
-        private static void SetFieldWhereKeysAreNotDefined<TParent, TChild>(PropertyAccessor<TParent, TChild> schema, IList<TParent> parentEntities, IList<TChild> childEntities)
+        private static void SetFieldWhereKeysAreNotDefined<TParent, TChild>(
+                PropertyAccessor<TParent, TChild> schema, 
+                IList<TParent> parentEntities, 
+                IList<TChild> childEntities)
             where TParent : class
             where TChild : class
         {
@@ -41,8 +43,11 @@ namespace LinqToDB.Utils
             
             if (schema.IsMemberTypeICollection)
             {
-                var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName, schema.MemberType);
+                var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName, 
+                    schema.MemberType);
+
                 var ifnullSetter = schema.DeclaringType.CreatePropertySetup<TParent, TChild>(schema.PropertyName);
+
                 foreach (var item in parentEntities)
                 {
                     ifnullSetter(item);
@@ -66,7 +71,10 @@ namespace LinqToDB.Utils
 
 
 
-        private static void SetFieldWhereKeysAreDefined<TParent, TChild>(PropertyAccessor<TParent, TChild> schema, IList<TParent> parentEntities, IList<TChild> childEntities)
+        private static void SetFieldWhereKeysAreDefined<TParent, TChild>(
+                PropertyAccessor<TParent, TChild> schema, 
+                IList<TParent> parentEntities, 
+                IList<TChild> childEntities)
             where TParent : class
             where TChild : class
         {
@@ -89,8 +97,11 @@ namespace LinqToDB.Utils
 
             if (schema.IsMemberTypeICollection)
             {
-                var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName, schema.MemberType);
+                var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName, 
+                    schema.MemberType);
+
                 var ifnullSetter = schema.DeclaringType.CreatePropertySetup<TParent, TChild>(schema.PropertyName);
+
                 foreach (var item in parentEntities)
                 {
                     ifnullSetter(item);
@@ -107,7 +118,10 @@ namespace LinqToDB.Utils
 
                 foreach (var item in parentEntities)
                 {
-                    var childEntity = childLookup[parentHasher(item)].Where(x => predicateFunc(item, x)).FirstOrDefault();
+                    var childEntity = childLookup[parentHasher(item)]
+                                            .Where(x => predicateFunc(item, x))
+                                            .FirstOrDefault();
+
                     setter(item, childEntity);
                 }
             }
@@ -134,7 +148,10 @@ namespace LinqToDB.Utils
             foreach (var propertyName in propertyNames)
             {
                 var property = type.GetProperty(propertyName);
-                exp = Expression.Call(typeof(EntityPropertySetter), nameof(MakeHashCode), new Type[] { property.PropertyType }, exp, Expression.Property(param2, property));
+                exp = Expression.Call(typeof(EntityPropertySetter), nameof(MakeHashCode), new Type[] 
+                {
+                    property.PropertyType
+                }, exp, Expression.Property(param2, property));
             }
 
             var func = Expression.Lambda<Func<T, int>>(exp, param2);

@@ -129,7 +129,8 @@ namespace LinqToDB.Utils
 
 
 
-        private static Expression BuildJoinClauseByPrimaryKey(EntityDescriptor childDesc, ParameterExpression childParam1, ParameterExpression childParam2)
+        private static Expression BuildJoinClauseByPrimaryKey(EntityDescriptor childDesc, 
+            ParameterExpression childParam1, ParameterExpression childParam2)
         {
             var pkColumns = childDesc.Columns.Where(x => x.IsPrimaryKey);
             if (!pkColumns.Any())
@@ -160,16 +161,19 @@ namespace LinqToDB.Utils
             return innerCondition;
         }
 
-        private static Expression BuildJoinClauseByForeignKey<TParent, TChild>(PropertyAccessor<TParent, TChild> schema,
-            LambdaExpression predicate,
-            ParameterExpression parentParam,
-            ParameterExpression childParam)
+        private static Expression BuildJoinClauseByForeignKey<TParent, TChild>(
+                PropertyAccessor<TParent, TChild> schema,
+                LambdaExpression predicate,
+                ParameterExpression parentParam,
+                ParameterExpression childParam)
             where TParent : class
             where TChild : class
         {
             var assoc = schema.AssociationDescriptor;
 
-            Expression previousExpr = predicate == null ? null : SubstituteParameters(predicate, parentParam, childParam);
+            Expression previousExpr = predicate == null ? null : 
+                SubstituteParameters(predicate, parentParam, childParam);
+
             if(previousExpr is LambdaExpression lambdaExpression)
             {
                 previousExpr = lambdaExpression.Body;
@@ -199,19 +203,23 @@ namespace LinqToDB.Utils
             return previousExpr;
         }
 
-        private static LambdaExpression SubstituteParameters(LambdaExpression predicate, ParameterExpression parentParam, ParameterExpression childParam)
+        private static LambdaExpression SubstituteParameters(LambdaExpression predicate, 
+            ParameterExpression parentParam, ParameterExpression childParam)
         {
             return Expression.Lambda(predicate.Body, parentParam, childParam);
         }
 
-        private static Expression<Func<TChild, TParent, bool>> BuildJoinExpression<TParent, TChild>(PropertyAccessor<TParent, TChild> schema)
+        private static Expression<Func<TChild, TParent, bool>> BuildJoinExpression<TParent, TChild>(
+                PropertyAccessor<TParent, TChild> schema)
             where TParent : class
             where TChild : class
         {
             var predicate = schema.AssociationDescriptor.GetPredicate(schema.DeclaringType, schema.MemberEntityType);
 
             var parentParam = predicate.Parameters.FirstOrDefault() ?? Expression.Parameter(schema.DeclaringType, "p");
-            var childParam = predicate.Parameters.Skip(1).FirstOrDefault() ?? Expression.Parameter(schema.MemberEntityType, "c");
+
+            var childParam = predicate.Parameters.Skip(1).FirstOrDefault() ?? 
+                                    Expression.Parameter(schema.MemberEntityType, "c");
 
             var previousExpr = BuildJoinClauseByForeignKey(schema, predicate, parentParam, childParam);
 
@@ -224,5 +232,4 @@ namespace LinqToDB.Utils
             return expr;
         }
     }
-
 }

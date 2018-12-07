@@ -33,7 +33,8 @@ namespace LinqToDB.Utils
             {
                 if (type.IsInterface)
                 {
-                    return type.GetGenericTypeDefinition().GetInterfaces().Any(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>));                    
+                    return type.GetGenericTypeDefinition().GetInterfaces()
+                                .Any(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>));                    
                 }
 
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
@@ -66,7 +67,8 @@ namespace LinqToDB.Utils
             return false;
         }
 
-        internal static Action<TElement, TValue> CreatePropertySetter<TElement, TValue>(this Type elementType, string propertyName)
+        internal static Action<TElement, TValue> CreatePropertySetter<TElement, TValue>(
+            this Type elementType, string propertyName)
         {
             var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
             var mi = pi.GetSetMethod();
@@ -80,7 +82,8 @@ namespace LinqToDB.Utils
         }
 
         [Obsolete]
-        internal static Action<TElement, ICollection<TValue>> CreateICollectionPropertySetter<TElement, TValue>(this Type elementType, string propertyName)
+        internal static Action<TElement, ICollection<TValue>> CreateICollectionPropertySetter<TElement, TValue>(
+            this Type elementType, string propertyName)
         {
             var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
             var mi = pi.GetSetMethod();
@@ -100,14 +103,17 @@ namespace LinqToDB.Utils
 
         
 
-        internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(this Type elementType, string propertyName, Type propertyType)
+        internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(
+                this Type elementType, string propertyName, Type propertyType)
         {
             var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);            
             var mi = pi.GetSetMethod();
 
             var oParam = Expression.Parameter(elementType, "obj");
             var vParam = Expression.Parameter(typeof(TValue), "val");
-            var mce = Expression.Call(Expression.Property(oParam, propertyName), typeof(ICollection<TValue>).GetMethod("Add"), vParam);
+            var mce = Expression.Call(Expression.Property(oParam, propertyName), 
+                            typeof(ICollection<TValue>).GetMethod("Add"), vParam);
+
             var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
 
             return action.Compile();
@@ -115,7 +121,9 @@ namespace LinqToDB.Utils
 
 
 
-        internal static Action<TParent> CreatePropertySetup<TParent, TChild>(this Type itemType, string propertyName) where TParent : class where TChild : class
+        internal static Action<TParent> CreatePropertySetup<TParent, TChild>(this Type itemType, string propertyName) 
+            where TParent : class 
+            where TChild : class
         {   
             var pi = itemType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
@@ -128,7 +136,8 @@ namespace LinqToDB.Utils
             var collectionTypeToCreate = GetTypeToCreate(tChildType);
             if (collectionTypeToCreate.GetConstructor(Type.EmptyTypes) == null)
             {
-                throw new ArgumentException("Collection must have a parameterless constructor. Try instantiating the item in the owners ctor");
+                throw new ArgumentException("Collection must have a parameterless constructor. Try instantiating " +
+                    "the item in the owners ctor");
             }
 
             Expression newCollection = null;
@@ -182,14 +191,16 @@ namespace LinqToDB.Utils
                 {
                     typeNum = def.GetInterfaces()
                                 .Where(x => x.IsGenericType)
-                                .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 : x.GetGenericTypeDefinition() == typeof(IList<>) ? 2 : 3);
+                                .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 : 
+                                            x.GetGenericTypeDefinition() == typeof(IList<>) ? 2 : 3);
                 }
             }
             else
             {
                 typeNum = def.GetInterfaces()
                            .Where(t => t.IsGenericType)
-                           .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 : x.GetGenericTypeDefinition() == typeof(IList<>) ? 2 : 3);
+                           .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 : 
+                                            x.GetGenericTypeDefinition() == typeof(IList<>) ? 2 : 3);
             }
 
             switch (typeNum)
