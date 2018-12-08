@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,36 +10,59 @@ namespace LinqToDB.Utils
 {
     class PathWalker : ExpressionVisitor
     {
-        private List<string> _path = new List<string>();
+        private List<MemberInfo> _members = new List<MemberInfo>();
 
         private PathWalker()
         {
 
         }
 
-        internal static List<string> GetPath<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> expr) 
-            where TEntity : class 
+        internal static List<string> GetPath<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> expr)
+            where TEntity : class
             where TProperty : class
         {
             var walker = new PathWalker();
             walker.Visit(expr);
-            walker._path.Reverse();
+            walker._members.Reverse();
 
-            return walker._path;
+            return walker._members.Select(x => x.Name).ToList();
         }
 
         internal static List<string> GetPath(MemberExpression expr)
         {
             var walker = new PathWalker();
             walker.Visit(expr);
-            walker._path.Reverse();
+            walker._members.Reverse();
 
-            return walker._path;
+            return walker._members.Select(x => x.Name).ToList();
         }
+
+
+        internal static List<MemberInfo> GetMembers<TEntity, TProperty>(Expression<Func<TEntity, TProperty>> expr)
+            where TEntity : class
+            where TProperty : class
+        {
+            var walker = new PathWalker();
+            walker.Visit(expr);
+            walker._members.Reverse();
+
+            return walker._members;
+        }
+
+        internal static List<MemberInfo> GetMembers(MemberExpression expr)
+        {
+            var walker = new PathWalker();
+            walker.Visit(expr);
+            walker._members.Reverse();
+
+            return walker._members;
+        }
+
+
 
         protected override Expression VisitMember(MemberExpression node)
         {
-            _path.Add(node.Member.Name);
+            _members.Add(node.Member);
             return base.VisitMember(node);
         }
     }

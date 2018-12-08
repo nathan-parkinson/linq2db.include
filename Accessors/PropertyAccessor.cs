@@ -9,8 +9,11 @@ namespace LinqToDB.Utils
 {
     class PropertyAccessor<TClass, TProperty> : PropertyAccessor<TClass> where TClass : class where TProperty : class
     {
+        private readonly int _memberInfoHashCode;
+
         public PropertyAccessor(MemberExpression exp, MappingSchema mappingSchema)
         {
+            _memberInfoHashCode = exp.Member.GetHashCode();
             _propertyName = exp.Member.Name;
             _declaringType = exp.Member.DeclaringType;
             _memberType = exp.Type;
@@ -34,25 +37,56 @@ namespace LinqToDB.Utils
             get;
         } = new HashSet<IPropertyAccessor<TProperty>>();
 
+        private IQueryable<TProperty> GetReusableQuery(IQueryable<TClass> query)
+        {
+            //get cache func
+            var customQueryBuilder = EntityMapOverride.Get<TClass, TProperty>(_memberInfoHashCode);
+
+            if (customQueryBuilder?.ReusableQueryBuilder != null)
+            {
+                return customQueryBuilder.ReusableQueryBuilder(query, _propertyFilter);
+            }
+            
+            var reusableQuery = PropertyQueryBuilder.BuildReusableQueryableForProperty(query, this);
+            if (_propertyFilter != null)
+            {
+                reusableQuery = reusableQuery.Where(_propertyFilter);
+            }
+            return reusableQuery;
+        }
+
+        private List<TProperty> ExecuteQuery(IQueryable<TClass> query)
+        {
+            //get cache func
+            var customQueryBuilder = EntityMapOverride.Get<TClass, TProperty>(_memberInfoHashCode);
+            
+            if (customQueryBuilder?.QueryExecuter != null)
+            {
+                return customQueryBuilder.QueryExecuter(query, _propertyFilter);
+            }
+
+            //get query
+            //TODO Change this to get a simpler query for execution and create another method to create a 
+            //reusable query for nested properties
+            var propertyQuery = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
+            if (_propertyFilter != null)
+            {
+                propertyQuery = propertyQuery.Where(_propertyFilter);
+            }
+
+            //run query into list
+            var propertyEntities = propertyQuery.ToList();
+            return propertyEntities;
+
+        }
 
         internal override void Load(List<TClass> entities, IQueryable<TClass> query)
         {
             //TODO need to check if this is inherited member
             //perhaps sort by property name and checkl if is inherited and if property is already loaded
 
-
             //get query
-            //TODO Change this to get a simpler query for execution and create another method to create a 
-            //reusable query for nested properties
-            var propertyQuery = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
-            if (propertyFilter != null)
-            {
-                propertyQuery = propertyQuery.Where(propertyFilter);
-            }
-
-
-            //run query into list
-            var propertyEntities = propertyQuery.ToList();
+            var propertyEntities = ExecuteQuery(query);
 
             IQueryable<TProperty> reusableQuery = null;
             //run nested properties
@@ -60,11 +94,7 @@ namespace LinqToDB.Utils
             {
                 if (reusableQuery == null)
                 {
-                    reusableQuery = PropertyQueryBuilder.BuildReusableQueryableForProperty(query, this);
-                    if (propertyFilter != null)
-                    {
-                        reusableQuery = reusableQuery.Where(propertyFilter);
-                    }
+                    reusableQuery = GetReusableQuery(query);
                 }
 
                 if (propertyAccessor is PropertyAccessor<TProperty> accessorImpl)
@@ -88,16 +118,16 @@ namespace LinqToDB.Utils
             this.SetField(entities, propertyEntities);
         }
 
-        private Expression<Func<TProperty, bool>> propertyFilter;
+        private Expression<Func<TProperty, bool>> _propertyFilter;
         internal void AddFilter(Expression<Func<TProperty, bool>> expr)
         {
-            if (propertyFilter == null)
+            if (_propertyFilter == null)
             {
-                propertyFilter = expr;
+                _propertyFilter = expr;
                 return;
             }
 
-            propertyFilter = AddToExpression(propertyFilter, expr);
+            _propertyFilter = AddToExpression(_propertyFilter, expr);
         }
 
         private static Expression<Func<TProperty, bool>> AddToExpression(Expression<Func<TProperty, bool>> expr1,

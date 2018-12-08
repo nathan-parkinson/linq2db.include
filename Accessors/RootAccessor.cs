@@ -33,7 +33,7 @@ namespace LinqToDB.Utils
 
         public void LoadMap(List<TClass> entities, IQueryable<TClass> query)
         {
-            foreach (var propertyAccessor in Properties)
+            foreach (var propertyAccessor in Properties.OrderBy(x => x.PropertyName))
             {
                 if (propertyAccessor is PropertyAccessor<TClass> accessorImpl)
                 {
