@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     abstract class PropertyAccessor<TClass> : IPropertyAccessor<TClass> where TClass : class
     {

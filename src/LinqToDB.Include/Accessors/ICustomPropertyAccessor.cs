@@ -1,4 +1,4 @@
-﻿namespace LinqToDB.Utils
+﻿namespace LinqToDB.Include
 {
     public interface ICustomPropertyAccessor
     {

@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     public static class EntityMapOverride
     {

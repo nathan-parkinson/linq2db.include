@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     public static class IncludeExtensions
     {

@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     public class IncludableQueryable<T> : IIncludableQueryable<T> where T : class
     {

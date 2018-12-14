@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     interface IPropertyAccessor
     {

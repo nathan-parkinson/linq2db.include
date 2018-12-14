@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     class PropertyAccessor<TClass, TProperty> : PropertyAccessor<TClass> where TClass : class where TProperty : class
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     class PropertyVisitor<TClass> : ExpressionVisitor
         where TClass : class

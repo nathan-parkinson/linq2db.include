@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     class RootAccessor<TClass> : IRootAccessor<TClass> where TClass : class
     {

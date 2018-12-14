@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     class PathWalker : ExpressionVisitor
     {

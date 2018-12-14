@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     interface IRootAccessor
     {

@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     static class PropertyQueryBuilder
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     public interface IIncludableQueryable<TClass> : IExpressionQuery<TClass> where TClass : class
     {

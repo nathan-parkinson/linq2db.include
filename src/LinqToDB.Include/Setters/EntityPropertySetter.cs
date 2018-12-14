@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace LinqToDB.Utils
+namespace LinqToDB.Include
 {
     static class EntityPropertySetter
     {
