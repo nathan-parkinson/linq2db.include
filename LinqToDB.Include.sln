@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinqToDB.Include", "src\LinqToDB.Include\LinqToDB.Include.csproj", "{293883CE-2A56-4914-87E8-556B373C7A83}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqToDB.Include.Tests", "src\LinqToDB.Include.Tests\LinqToDB.Include.Tests\LinqToDB.Include.Tests.csproj", "{530435D0-9845-44D2-A443-929F31B8E97B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{293883CE-2A56-4914-87E8-556B373C7A83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{293883CE-2A56-4914-87E8-556B373C7A83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{293883CE-2A56-4914-87E8-556B373C7A83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{530435D0-9845-44D2-A443-929F31B8E97B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{530435D0-9845-44D2-A443-929F31B8E97B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{530435D0-9845-44D2-A443-929F31B8E97B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{530435D0-9845-44D2-A443-929F31B8E97B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
