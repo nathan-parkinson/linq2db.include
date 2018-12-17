@@ -44,21 +44,5 @@ namespace LinqToDB.Include
 
             throw new ArgumentException($"Source object is not of type '{nameof(IncludableQueryable<TClass, TProperty>)}'");
         }
-
-
-        /*
-        public static List<TClass> ToList<TClass>(this IIncludableQueryable<TClass> includable)
-            where TClass : class
-        {
-            var includeImpl = includable as IncludableQueryable<TClass>;
-            if(includeImpl == null)
-            {
-                throw new ArgumentException("parameter includable must be of type IncludableQueryable<TClass>");                     
-            }
-            
-            var entities = includeImpl.LoadEntityMap(includable);            
-            return entities;
-        }
-        */
     }
 }
