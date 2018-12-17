@@ -20,13 +20,13 @@ linq2db.include uses the existing linq2db mappings - specifically the associatio
 
 
 linq2db.include adds include functionality through extension methods.  
-Simply add
+Simply add the line below to the top of the file.
 
 ``` c#
 using LinqToDB.Include;
 ```
-to the top of the file and then eager loading can be added to any linq2db `IQueryable<T>` object as shown below
 
+Then eager loading can be added to any linq2db `IQueryable<T>` object as shown below.
 ``` c#
 var query = from p in db.People
             where
@@ -36,26 +36,26 @@ var query = from p in db.People
 query = query.Include(x => x.Spouse);
 ```
 
-`IEnumerables` can be added like this
+`IEnumerables` can be added like this.
 ``` c#
 query = query.Include(x => x.Children.First());
 ```
-or like this
+Or like this.
 ``` c#
 query = query.Include(x => x.Children[0]);
 ```
 
-linq2db.include allows for nested includes, like this
+linq2db.include allows for nested includes, like this.
 ``` c#
 query = query.Include(x => x.Spouse.CurrentJob);
 ```
 
-and through `IEnumerables` like this
+And through `IEnumerable` members like this.
 ``` c#
 query = query.Include(x => x.Children[0].School);
 ```
 
-or this
+Or this.
 
 ``` c#
 query = query.Include(x => x.Children.First().School);
@@ -75,7 +75,7 @@ productLineQuery.Include(x => ((ExtendedProductLine)x).PropertyOfExtendedClass);
 
 ### Filters
 
-Extra filters can be added to nested items to limit the child entities that are loaded
+Extra filters can be added to nested items to limit the child entities that are loaded.
 ``` c#
 lobQuery.Include(x => x.Orders.First(), x => x.OrderQty > 10);
 ```
@@ -83,7 +83,7 @@ lobQuery.Include(x => x.Orders.First(), x => x.OrderQty > 10);
 
 It is important that the first call to `.Include` method sets the result back to the variable that is going to be executed. This is because the Include method returns an object of type `IncludableQueryable` which is required for the eager loading to work.  It is this object that must be used to execute the query.
 
-This is correct
+This is correct.
 ``` c#
 var query = from p in db.People
             where
@@ -94,8 +94,7 @@ query = query.Include(x => x.Spouse);
 var people = query.ToList();
 ```
 
-This is incorrect
-
+This is incorrect.
 ``` c#
 var query = from p in db.People
             where
@@ -106,7 +105,7 @@ query.Include(x => x.Spouse);
 var people = query.ToList();
 ```
 
-After the first call to `.Include` subsequent calls do not need to handle the return value, as show below
+After the first call to `.Include` subsequent calls do not need to handle the return value, as show below.
 
 ``` c#
 var query = from p in db.People
@@ -121,7 +120,7 @@ var people = query.ToList();
 
 ## Predicates and Performance
 
-linq2db allows for associations to be set via expressio predicates.  This is a very useful and powerful feature that allows for entity relationships to be defined by more than just a plain field = field expression.  
+linq2db allows for associations to be set via expression predicates.  This is a very useful and powerful feature that allows for entity relationships to be defined by more than just a plain field = field expression.  
 
 linq2db.include can handle associations defined in this way, however, there is a performance cost when there are no field = field conditions.  
 
@@ -141,7 +140,7 @@ public class Person
 ```
 
 
-Fastest configuration
+Fastest configuration (without predicates)
 
 ``` c#
 builder.Entity<Person>()    
@@ -152,7 +151,7 @@ builder.Entity<Person>()
     .Property(x => x.Orders).IsNotColumn().Association(x => x.Orders, p => p.PersonId, o => o.First().PersonId);
 ```
 
-Slightly slower
+Slightly slower  (with predicates)
 
 ``` c#
 builder.Entity<Person>()    
@@ -164,7 +163,7 @@ builder.Entity<Person>()
 
 ```
 
-Slowest
+Slowest  (with predicates)
 ``` c#
 builder.Entity<Person>()    
     .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId && o.OrderId < 99)
@@ -179,6 +178,38 @@ builder.Entity<Person>()
 In summary, if predicates are used, it is better to keep any field = field conditions in the `ThisKey` other `OtherKey` properties of the `AssociationAttribute` and keep only non = conditions in the predicate expression.
 
 
+## Composing Queries
+
+Queries can still be composed as they normally would be using linq2db.  
+This will retain the include config.
+``` c#
+var query = from p in db.People
+            where
+                p.DOB > DateTime.Now.AddYears(-10)
+            select p;
+
+query = query.Include(p => p.Children.First());
+
+query = from p in query
+        where
+            p.LastName = "Smith"
+        select p;
+```
+
+This will not.
+``` c#
+var query = from p in db.People
+            where
+                p.DOB > DateTime.Now.AddYears(-10)
+            select p;
+
+query = query.Include(p => p.Children.First());
+
+var jobQuery  = from p in query
+                where
+                    p.LastName = "Smith"
+                select p.CurrentJob;
+```
 ## Roadmap
 
 These are high level ideas at this stage and may or may not be possible\implemented.
