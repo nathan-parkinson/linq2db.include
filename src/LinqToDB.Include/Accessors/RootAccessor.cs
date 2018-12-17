@@ -11,8 +11,7 @@ namespace LinqToDB.Include
         {
             MappingSchema = mappingSchema;
         }
-
-        //TODO Dictionary or HashSet
+        
         public HashSet<IPropertyAccessor<TClass>> Properties { get; } = new HashSet<IPropertyAccessor<TClass>>();
 
         PropertyAccessor<TEntity, TProperty> IRootAccessor.GetByPath<TEntity, TProperty>(List<string> pathParts)

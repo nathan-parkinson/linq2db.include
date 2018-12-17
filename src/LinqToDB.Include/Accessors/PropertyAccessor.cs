@@ -30,8 +30,7 @@ namespace LinqToDB.Include
         {
             get => new HashSet<IPropertyAccessor>(PropertiesOfTClass);
         }
-
-        //TODO ?decide whether or not to remove this property
+        
         public HashSet<IPropertyAccessor<TProperty>> PropertiesOfTClass
         {
             get;
@@ -66,8 +65,6 @@ namespace LinqToDB.Include
             }
 
             //get query
-            //TODO Change this to get a simpler query for execution and create another method to create a 
-            //reusable query for nested properties
             var propertyQuery = PropertyQueryBuilder.BuildQueryableForProperty(query, this);
             if (_propertyFilter != null)
             {
@@ -81,15 +78,14 @@ namespace LinqToDB.Include
         }
 
         internal override void Load(List<TClass> entities, IQueryable<TClass> query)
-        {
-            //TODO need to check if this is inherited member
-            //perhaps sort by property name and checkl if is inherited and if property is already loaded
-
+        {            
             //get query
             var propertyEntities = ExecuteQuery(query);
 
             IQueryable<TProperty> reusableQuery = null;
             //run nested properties
+            //TODO make sure the base member is always executed first in case
+            //where inheritance is used
             foreach (var propertyAccessor in PropertiesOfTClass.OrderBy(x => x.PropertyName))
             {
                 if (reusableQuery == null)
