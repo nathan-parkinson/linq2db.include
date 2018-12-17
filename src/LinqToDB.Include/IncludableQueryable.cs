@@ -12,9 +12,50 @@ using System.Threading.Tasks;
 
 namespace LinqToDB.Include
 {
+    public class IncludableQueryable<T, P> : IncludableQueryable<T>, IIncludableQueryable<T, P>
+        where T : class
+        where P : class
+    {
+        private readonly Expression<Func<T, P>> _previousPropertyExpr;
+
+        internal IncludableQueryable(IQueryable<T> query) 
+            : base(query)
+        { }
+
+
+        internal IncludableQueryable(IQueryable<T> query, IRootAccessor<T> rootAccessor, 
+            Expression<Func<T, P>> previousPropertyExpression = null) 
+            : base(query, rootAccessor)
+        {
+            _previousPropertyExpr = previousPropertyExpression;
+        }
+        
+
+        public IIncludableQueryable<T, TProperty> AddThenExpression<TProperty>(Expression<Func<T, TProperty>> expr, 
+            Expression<Func<TProperty, bool>> propertyFilter = null)
+            where TProperty : class
+        {
+            //implement code here to combine the previous expression with 
+            if(_previousPropertyExpr != null)
+            {
+
+            }
+
+            //var visitor = new PropertyVisitor<T>(_rootAccessor);
+            //visitor.MapProperties(expr, propertyFilter);
+            //return this;
+
+            var newIncludable = new IncludableQueryable<T, TProperty>(LinqToDBQuery, _rootAccessor, expr);
+            newIncludable.AddExpression(expr, propertyFilter);
+            return newIncludable;
+        }
+    }
+
+
+
     public class IncludableQueryable<T> : IIncludableQueryable<T> where T : class
     {
-        private readonly IRootAccessor<T> _rootAccessor;
+        internal readonly IRootAccessor<T> _rootAccessor;
 
         internal IncludableQueryable(IQueryable<T> query)
         {
@@ -39,6 +80,11 @@ namespace LinqToDB.Include
             var context = query.GetDataContext<IDataContext>();
             _rootAccessor = rootAccessor;
         }
+
+        internal IncludableQueryable<T, P> ToPropertyIncludable<P>()
+            where P : class
+            => new IncludableQueryable<T, P>(LinqToDBQuery, _rootAccessor);
+        
 
         public IIncludableQueryable<T> AddExpression<TProperty>(
                 Expression<Func<T, TProperty>> expr, 
