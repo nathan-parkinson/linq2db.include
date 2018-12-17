@@ -179,11 +179,6 @@ builder.Entity<Person>()
 In summary, if predicates are used, it is better to keep any field = field conditions in the `ThisKey` other `OtherKey` properties of the `AssociationAttribute` and keep only non = conditions in the predicate expression.
 
 
-## Custom Mapping
-
-If for some reason the standard association mapping is not suitable to loading child entities then linq2db.include allows for a manual override to be added so that custom code can be executed for a specific type\member in place of the stand libary code. This is shown in the following example.
-
-
 ## Roadmap
 
 These are high level ideas at this stage and may or may not be possible\implemented.
