@@ -45,8 +45,7 @@ namespace LinqToDB.Include
                 }
                 else
                 {
-                    //TODO Create own exception type and ad a proper message
-                    throw new Exception();
+                    throw new PropertyAccessorNotFoundException($"PropertyAccessor<{typeof(TClass).Name}, {typeof(TProperty).Name}> not found");
                 }
             }
 

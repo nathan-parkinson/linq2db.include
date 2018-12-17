@@ -107,9 +107,8 @@ namespace LinqToDB.Include
                     LoadForInheritedType(dynamicAccessor, propertyEntities, reusableQuery);
                 }
                 else
-                {
-                    //TODO Create own exception type and ad a proper message
-                    throw new Exception();
+                {                    
+                    throw new PropertyAccessorNotFoundException($"PropertyAccessor<{typeof(TProperty).Name}> not found");
                 }
             }
 

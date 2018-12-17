@@ -135,7 +135,7 @@ namespace LinqToDB.Include
             var pkColumns = childDesc.Columns.Where(x => x.IsPrimaryKey);
             if (!pkColumns.Any())
             {
-                throw new Exception($"No primary key defined for type '{childDesc.TypeAccessor}'");
+                throw new PrimaryKeyNotFoundException($"No primary key defined for type '{childDesc.ObjectType.Name}'");
             }
 
             Expression innerCondition = null;
