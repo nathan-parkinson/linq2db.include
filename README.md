@@ -129,15 +129,15 @@ linq2db.include uses these simple equals conditions to match the loaded entities
 
 Class definition
 ``` c#
-    public class Person
-    {
-        public int PersonId { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public DateTime Dob { get; set; }
-        public List<Order> Orders { get; set; } = new List<Order>();
-        public static Expression<Func<Person, Order, bool>> ExtraJoinOptions = (p, o) => o.OrderId < 99;
-    }
+public class Person
+{
+    public int PersonId { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public DateTime Dob { get; set; }
+    public List<Order> Orders { get; set; } = new List<Order>();
+    public static Expression<Func<Person, Order, bool>> ExtraJoinOptions = (p, o) => o.OrderId < 99;
+}
 ```
 
 
