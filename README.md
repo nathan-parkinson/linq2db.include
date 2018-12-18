@@ -225,4 +225,4 @@ These are high level ideas at this stage and may or may not be possible\implemen
 
 ## License
 
-This project is licensed under the MIT License - see the [MIT-LICENSE.md](MIT-LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
