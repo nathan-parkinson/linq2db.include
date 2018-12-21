@@ -216,9 +216,9 @@ namespace LinqToDB.Include
         {
             var predicate = schema.AssociationDescriptor.GetPredicate(schema.DeclaringType, schema.MemberEntityType);
 
-            var parentParam = predicate.Parameters.FirstOrDefault() ?? Expression.Parameter(schema.DeclaringType, "p");
+            var parentParam = predicate?.Parameters.FirstOrDefault() ?? Expression.Parameter(schema.DeclaringType, "p");
 
-            var childParam = predicate.Parameters.Skip(1).FirstOrDefault() ?? 
+            var childParam = predicate?.Parameters.Skip(1).FirstOrDefault() ?? 
                                     Expression.Parameter(schema.MemberEntityType, "c");
 
             var previousExpr = BuildJoinClauseByForeignKey(schema, predicate, parentParam, childParam);
