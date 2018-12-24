@@ -23,14 +23,22 @@ namespace LinqToDB.Include
 
             ChildEntityDescriptor = mappingSchema.GetEntityDescriptor(_memberEntityType);
             ParentEntityDescriptor = mappingSchema.GetEntityDescriptor(DeclaringType);
-            AssociationDescriptor = ParentEntityDescriptor.Associations.Single(x => x.MemberInfo.Name == PropertyName);
+
+            try
+            {
+                AssociationDescriptor = ParentEntityDescriptor.Associations.Single(x => x.MemberInfo.Name == PropertyName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new SingleAssociationNotFoundException(ex, $"Single association not found for '{_declaringType.Name}.{PropertyName}'.");
+            }
         }
 
         public override HashSet<IPropertyAccessor> Properties
         {
             get => new HashSet<IPropertyAccessor>(PropertiesOfTClass);
         }
-        
+
         public HashSet<IPropertyAccessor<TProperty>> PropertiesOfTClass
         {
             get;
@@ -45,7 +53,7 @@ namespace LinqToDB.Include
             {
                 return customQueryBuilder.ReusableQueryBuilder(query, _propertyFilter);
             }
-            
+
             var reusableQuery = PropertyQueryBuilder.BuildReusableQueryableForProperty(query, this);
             if (_propertyFilter != null)
             {
@@ -58,7 +66,7 @@ namespace LinqToDB.Include
         {
             //get cache func
             var customQueryBuilder = EntityMapOverride.Get<TClass, TProperty>(_memberInfoHashCode);
-            
+
             if (customQueryBuilder?.QueryExecuter != null)
             {
                 return customQueryBuilder.QueryExecuter(query, _propertyFilter);
@@ -78,7 +86,7 @@ namespace LinqToDB.Include
         }
 
         internal override void Load(List<TClass> entities, IQueryable<TClass> query)
-        {            
+        {
             //get query
             var propertyEntities = ExecuteQuery(query);
 
@@ -103,7 +111,7 @@ namespace LinqToDB.Include
                     LoadForInheritedType(dynamicAccessor, propertyEntities, reusableQuery);
                 }
                 else
-                {                    
+                {
                     throw new PropertyAccessorNotFoundException($"PropertyAccessor<{typeof(TProperty).Name}> not found");
                 }
             }
