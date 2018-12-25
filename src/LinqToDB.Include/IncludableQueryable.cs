@@ -18,36 +18,50 @@ namespace LinqToDB.Include
     {
         private readonly Expression<Func<T, P>> _previousPropertyExpr;
 
-        internal IncludableQueryable(IQueryable<T> query) 
+        internal IncludableQueryable(IQueryable<T> query)
             : base(query)
         { }
 
 
-        internal IncludableQueryable(IQueryable<T> query, IRootAccessor<T> rootAccessor, 
-            Expression<Func<T, P>> previousPropertyExpression = null) 
+        internal IncludableQueryable(IQueryable<T> query, IRootAccessor<T> rootAccessor,
+            Expression<Func<T, P>> previousPropertyExpression = null)
             : base(query, rootAccessor)
         {
             _previousPropertyExpr = previousPropertyExpression;
         }
-        
 
-        public IIncludableQueryable<T, TProperty> AddThenExpression<TProperty>(Expression<Func<T, TProperty>> expr, 
+
+        public IIncludableQueryable<T, TProperty> AddThenExpression<TProperty>(Expression<Func<P, TProperty>> expr,
             Expression<Func<TProperty, bool>> propertyFilter = null)
             where TProperty : class
         {
-            //implement code here to combine the previous expression with 
-            if(_previousPropertyExpr != null)
-            {
 
+            Expression<Func<T, TProperty>> lambda = null;
+
+            //implement code here to combine the previous expression with 
+            if (_previousPropertyExpr != null)
+            {
+                var param = Expression.Parameter(typeof(T), "item");
+                var item = Expression.Invoke(_previousPropertyExpr, param);
+                var key = Expression.Invoke(expr, item);
+                lambda = Expression.Lambda<Func<T, TProperty>>(key, param);
             }
 
             //var visitor = new PropertyVisitor<T>(_rootAccessor);
             //visitor.MapProperties(expr, propertyFilter);
             //return this;
 
-            var newIncludable = new IncludableQueryable<T, TProperty>(LinqToDBQuery, _rootAccessor, expr);
-            newIncludable.AddExpression(expr, propertyFilter);
+            var newIncludable = new IncludableQueryable<T, TProperty>(LinqToDBQuery, _rootAccessor, lambda);
+            newIncludable.AddExpression(lambda, propertyFilter);
             return newIncludable;
+        }
+
+        public IIncludableQueryable<T, P> AddExpression(Expression<Func<T, P>> expr,
+            Expression<Func<P, bool>> propertyFilter = null)
+        {
+            var visitor = new PropertyVisitor<T>(_rootAccessor);
+            visitor.MapProperties(expr, propertyFilter);
+            return this;
         }
     }
 
@@ -84,17 +98,9 @@ namespace LinqToDB.Include
         internal IncludableQueryable<T, P> ToPropertyIncludable<P>()
             where P : class
             => new IncludableQueryable<T, P>(LinqToDBQuery, _rootAccessor);
-        
 
-        public IIncludableQueryable<T> AddExpression<TProperty>(
-                Expression<Func<T, TProperty>> expr, 
-                Expression<Func<TProperty, bool>> propertyFilter = null)
-            where TProperty : class
-        {
-            var visitor = new PropertyVisitor<T>(_rootAccessor);
-            visitor.MapProperties(expr, propertyFilter);
-            return this;
-        }
+
+
 
         public IExpressionQuery<T> LinqToDBQuery { get; }
 
@@ -170,7 +176,7 @@ namespace LinqToDB.Include
 
 
 
-            var returnQueryable = Activator.CreateInstance(makeme, flags, null, parameters, culture) 
+            var returnQueryable = Activator.CreateInstance(makeme, flags, null, parameters, culture)
                 as IQueryable<TElement>;
 
             return returnQueryable;
@@ -181,7 +187,7 @@ namespace LinqToDB.Include
 
         TResult IQueryProvider.Execute<TResult>(Expression expression)
             => LinqToDBQuery.Execute<TResult>(expression);
-        
+
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
