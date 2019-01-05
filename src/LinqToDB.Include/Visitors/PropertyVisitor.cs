@@ -15,14 +15,17 @@ namespace LinqToDB.Include
         {
             _rootAccessor = rootAccessor;
         }
-
-
-        private static void AddFilterForInheritedType<T, TProperty>(IPropertyAccessor<T> accessor, 
-            Expression<Func<TProperty, bool>> includeFilter)
-            where T : class
-            where TProperty : class
+        
+        private static void AddFilterForDynamicType<T, TProperty>(IPropertyAccessor<T> accessor,
+    Expression<Func<TProperty, bool>> includeFilter)
+    where T : class
+    where TProperty : class
         {
-            var accessorImpl = (PropertyAccessor<T, TProperty>)accessor;
+            var accessorImpl = accessor as PropertyAccessor<T, TProperty>;
+            if (accessorImpl == null)
+            {
+                throw new PropertyAccessorNotFoundException($"PropertyAccessor<{typeof(T).Name}, {typeof(TProperty).Name}> not found");
+            }
             accessorImpl.AddFilter(includeFilter);
         }
 
@@ -31,28 +34,27 @@ namespace LinqToDB.Include
             where TProperty : class
         {
             Visit(expr);
+
             var accessor = latestAccessor as IPropertyAccessor<TClass>;
+            //dupes at this point
+            if (!_rootAccessor.Properties.Contains(accessor))
+            {
+                _rootAccessor.Properties.Add(accessor);
+            }
+            
             if (includeFilter != null)
             {
                 if (latestAccessor is PropertyAccessor<TClass, TProperty> accessorImpl)
                 {
                     accessorImpl.AddFilter(includeFilter);
                 }
-                else if (typeof(TClass).IsAssignableFrom(latestAccessor.DeclaringType))
-                {
-                    dynamic dynamicAccessor = latestAccessor;
-                    AddFilterForInheritedType(dynamicAccessor, includeFilter);
-                }
                 else
                 {
-                    throw new PropertyAccessorNotFoundException($"PropertyAccessor<{typeof(TClass).Name}, {typeof(TProperty).Name}> not found");
-                }
-            }
-
-            //dupes at this point
-            if (!_rootAccessor.Properties.Contains(accessor))
-            {
-                _rootAccessor.Properties.Add(accessor);
+                    //can type checking be added here?
+                    var propertyAccessor = _rootAccessor.GetByPath(PathWalker.GetPath(expr));
+                    dynamic dynamicAccessor = propertyAccessor;
+                    AddFilterForDynamicType(dynamicAccessor, includeFilter);                    
+                }                
             }
 
             return _rootAccessor;
@@ -86,6 +88,7 @@ namespace LinqToDB.Include
         {
             //check PropertyAccessor for the property does not already exist
             var localAccessor = CreateAccessor(node);
+
             latestAccessor = localAccessor;
             return base.VisitMember(node);
         }
