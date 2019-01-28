@@ -87,6 +87,10 @@ namespace LinqToDB.Include
 
         internal override void Load(List<TClass> entities, IQueryable<TClass> query)
         {
+            if(!(entities?.Any() ?? false))
+            {
+                return;
+            }
             //get query
             var propertyEntities = ExecuteQuery(query);
 
