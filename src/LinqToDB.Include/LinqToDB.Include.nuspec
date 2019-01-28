@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>linq2db.include</id>
-    <version>1.0.0-alpha.3</version>
+    <version>1.0.0-alpha.4</version>
     <title>linq2db.include</title>
     <authors>Nathan Parkinson</authors>
     <owners>Nathan Parkinson</owners>
