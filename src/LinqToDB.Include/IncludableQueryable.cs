@@ -41,7 +41,7 @@ namespace LinqToDB.Include
         }
 
         public IIncludableQueryable<T> AddExpression<TProperty>(
-                Expression<Func<T, TProperty>> expr, 
+                Expression<Func<T, TProperty>> expr,
                 Expression<Func<TProperty, bool>> propertyFilter = null)
             where TProperty : class
         {
@@ -124,18 +124,52 @@ namespace LinqToDB.Include
 
 
 
-            var returnQueryable = Activator.CreateInstance(makeme, flags, null, parameters, culture) 
+            var returnQueryable = Activator.CreateInstance(makeme, flags, null, parameters, culture)
                 as IQueryable<TElement>;
 
             return returnQueryable;
         }
 
 
-        object IQueryProvider.Execute(Expression expression) => LinqToDBQuery.Execute(expression);
+        object IQueryProvider.Execute(Expression expression)
+        {
+            var entity = LinqToDBQuery.Execute(expression);
 
-        TResult IQueryProvider.Execute<TResult>(Expression expression)
-            => LinqToDBQuery.Execute<TResult>(expression);
+            if (entity is T tEntity)
+            {
+                var db = this.GetDataContext<IDataContext>();
+                var resultingQuery = Internals.CreateExpressionQueryInstance<T>(db, expression);
+
+                var queryToPass = from x in this
+                                  where
+                                    x == resultingQuery
+                                  select x;
+
+                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+            }
+            
+            return entity;
+        }
         
+        TResult IQueryProvider.Execute<TResult>(Expression expression)
+        {
+            var entity = LinqToDBQuery.Execute<TResult>(expression);
+
+            if (entity is T tEntity)
+            {
+                var db = this.GetDataContext<IDataContext>();
+                var resultingQuery = Internals.CreateExpressionQueryInstance<TResult>(db, expression);
+
+                var queryToPass = from x in this
+                                  where
+                                    x == resultingQuery
+                                  select x;
+
+                 _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+            }
+
+            return entity;
+        }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
