@@ -24,7 +24,7 @@ namespace Tests
         }
 
         [Test]
-        public void Test1()
+        public void FirstMethodAddsIncludedEntities()
         {
             using (var db = new DBContext())
             {
@@ -33,11 +33,179 @@ namespace Tests
                 var query = from q in db.People
                             where q.FirstName == "Jim"
                             select q;
-                query = query.Include(x => x.Spouse);
 
+                query = query.Include(x => x.Spouse);
                 var p = query.First();
-                var p2 = query.ToList().First();
-                Assert.IsNotNull(p.Spouse);                
+                
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+        [Test]
+        public void FirstMethodWithOverloadAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from x in db.People
+                            select x;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.First(x => x.FirstName == "Jim");
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+        [Test]
+        public void FirstOrDefaultMethodAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where q.FirstName == "Jim"
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.FirstOrDefault();
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+        [Test]
+        public void FirstOrDefaultMethodWithOverloadAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from x in db.People
+                            select x;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.FirstOrDefault(x => x.FirstName == "Jim");
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+
+
+
+        [Test]
+        public void SingleMethodAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where q.FirstName == "Jim"
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.Single();
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+        [Test]
+        public void SingleMethodWithOverloadAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from x in db.People
+                            select x;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.Single(x => x.FirstName == "Jim");
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+        [Test]
+        public void SingleOrDefaultMethodAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where q.FirstName == "Jim"
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.SingleOrDefault();
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+        [Test]
+        public void SingleOrDefaultMethodWithOverloadAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from x in db.People
+                            select x;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.FirstOrDefault(x => x.FirstName == "Jim");
+
+                Assert.IsNotNull(p.Spouse);
+            }
+        }
+
+
+
+
+
+        [Test]
+        public void ElementAtMethodAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where q.FirstName == "Jim"
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.ElementAt(0);
+
+                Assert.IsNotNull(p.Spouse);
+                Assert.AreEqual(p.PersonId, 2);
+            }
+        }
+
+
+
+        [Test]
+        public void ElementAtWithSkipMethodAddsIncludedEntities()
+        {
+            using (var db = new DBContext())
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.ElementAt(1);
+
+                Assert.IsNotNull(p.Spouse);
+                Assert.AreEqual(p.PersonId, 2);
             }
         }
 
@@ -69,8 +237,6 @@ namespace Tests
 
     public class DBContext : DataConnection
     {
-        private static bool isMapped = false;
-
         public DBContext() : base("DBConn")
         {
             var builder = MappingSchema.Default.GetFluentMappingBuilder();
