@@ -77,5 +77,10 @@ namespace LinqToDB.Include
             return CustomTypeOverrides.TryAdd(cpa.Key, cpa);
         }
 
+        public static void Clear()
+        {
+            CustomTypeOverrides.Clear();
+            CustomPropertyOverrides.Clear();
+        }
     }
 }
