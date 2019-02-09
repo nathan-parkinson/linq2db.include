@@ -66,10 +66,12 @@ namespace LinqToDB.Include
         {
             //get cache func
             var customQueryBuilder = EntityMapOverride.Get<TClass, TProperty>(_memberInfoHashCode);
+            var entityBuilder = EntityMapOverride.Get<TProperty>();
+
 
             if (customQueryBuilder?.QueryExecuter != null)
             {
-                return customQueryBuilder.QueryExecuter(query, _propertyFilter);
+                return customQueryBuilder.QueryExecuter(query, _propertyFilter, entityBuilder);
             }
 
             //get query
@@ -77,6 +79,11 @@ namespace LinqToDB.Include
             if (_propertyFilter != null)
             {
                 propertyQuery = propertyQuery.Where(_propertyFilter);
+            }
+
+            if(entityBuilder != null)
+            {
+                propertyQuery = propertyQuery.Select(entityBuilder);
             }
 
             //run query into list

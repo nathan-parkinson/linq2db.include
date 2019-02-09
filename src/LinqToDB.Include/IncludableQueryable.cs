@@ -92,7 +92,7 @@ namespace LinqToDB.Include
             if (!typeof(TElement).IsClass)
             {
                 //TODO Test this works
-                return LinqToDB.Linq.Internals.CreateExpressionQueryInstance<TElement>(DataContext, Expression);
+                return Internals.CreateExpressionQueryInstance<TElement>(DataContext, Expression);
                 //throw new ArgumentException("TElement must be a class");
             }
 
@@ -147,25 +147,41 @@ namespace LinqToDB.Include
 
                 _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
             }
-            
+
             return entity;
         }
-        
+
         TResult IQueryProvider.Execute<TResult>(Expression expression)
         {
-            var entity = LinqToDBQuery.Execute<TResult>(expression);
-
-            if (entity is T tEntity)
+            if (typeof(T) != typeof(TResult))
             {
-                var db = this.GetDataContext<IDataContext>();
-                var resultingQuery = Internals.CreateExpressionQueryInstance<TResult>(db, expression);
+                //?Add isClass check here?
+                return LinqToDBQuery.Execute<TResult>(expression);
+            }
 
-                var queryToPass = from x in this
-                                  where
-                                    x == resultingQuery
-                                  select x;
+            var db = this.GetDataContext<IDataContext>();
+            
+            var resultingQuery = Internals.CreateExpressionQueryInstance<T>(db, expression);
 
-                 _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+            var entity = default(TResult);
+            var entityBuilder = EntityMapOverride.Get<T>();
+            if (entityBuilder != null)
+            {                
+                var finalExpression = resultingQuery.Select(entityBuilder).Expression;
+                entity = LinqToDBQuery.Execute<TResult>(finalExpression);
+            }
+
+
+
+            var queryToPass = from x in this
+                              where
+                                x == resultingQuery
+                              select x;
+
+            var tEntity = entity as T;
+            if (tEntity != null)
+            {
+                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
             }
 
             return entity;
@@ -173,7 +189,13 @@ namespace LinqToDB.Include
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            var entities = LinqToDBQuery.ToList();
+            var entityBuilder = EntityMapOverride.Get<T>();
+
+            var entities = (entityBuilder == null ?
+                                LinqToDBQuery :
+                                LinqToDBQuery.Select(entityBuilder)
+                           ).ToList();
+
             _rootAccessor.LoadMap(entities, this);
 
             return entities.GetEnumerator();
@@ -181,7 +203,16 @@ namespace LinqToDB.Include
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            var entities = LinqToDBQuery.ToList();
+            var entityBuilder = EntityMapOverride.Get<T>();
+
+            var entities = (entityBuilder == null ?
+                                LinqToDBQuery :
+                                LinqToDBQuery.Select(entityBuilder)
+                           ).ToList();
+
+
+
+
             _rootAccessor.LoadMap(entities, this);
 
             return ((IEnumerable)entities).GetEnumerator();

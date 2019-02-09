@@ -11,17 +11,31 @@ namespace LinqToDB.Include
     {
         public CustomPropertyAccessor(
             int memberInfoHashCode,
-            Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, List<TProperty>> queryExecuter,
-            Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, IQueryable<TProperty>> reusableQueryBuilder)
+            Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, Expression<Func<TProperty, TProperty>>, List<TProperty>> queryExecuter,
+            Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, IQueryable<TProperty>> reusableQueryBuilder)         
         {
-            Key = memberInfoHashCode;
+            Key = memberInfoHashCode;            
+
             QueryExecuter = queryExecuter;
             ReusableQueryBuilder = reusableQueryBuilder;
         }
-
-        public Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, List<TProperty>> QueryExecuter { get; }
-        public Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, IQueryable<TProperty>> ReusableQueryBuilder { get; }
-
+        
         public int Key { get; }
+
+        public Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, Expression<Func<TProperty, TProperty>>, List<TProperty>> QueryExecuter { get; }
+        public Func<IQueryable<TClass>, Expression<Func<TProperty, bool>>, IQueryable<TProperty>> ReusableQueryBuilder { get; }        
+    }
+
+
+    public class CustomTypeAccessor<TClass> : ICustomTypeAccessor where TClass : class    
+    {
+        public CustomTypeAccessor(Expression<Func<TClass, TClass>> entityBuilder)            
+        {
+            EntityBuilder = entityBuilder;
+        }
+
+        public Type Key { get; } = typeof(TClass);
+
+        public Expression<Func<TClass, TClass>> EntityBuilder { get; }
     }
 }
