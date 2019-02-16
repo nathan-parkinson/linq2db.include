@@ -22,7 +22,7 @@ namespace Tests
         [Test]
         public void FirstMethodAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -40,7 +40,7 @@ namespace Tests
         [Test]
         public void FirstMethodWithOverloadAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -57,7 +57,7 @@ namespace Tests
         [Test]
         public void FirstOrDefaultMethodAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -75,7 +75,7 @@ namespace Tests
         [Test]
         public void FirstOrDefaultMethodWithOverloadAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -93,7 +93,7 @@ namespace Tests
         [Test]
         public void TestCallingExecuteDoesNotChangeQuery()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -115,7 +115,7 @@ namespace Tests
         [Test]
         public void SingleMethodAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -133,7 +133,7 @@ namespace Tests
         [Test]
         public void SingleMethodWithOverloadAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -150,7 +150,7 @@ namespace Tests
         [Test]
         public void SingleOrDefaultMethodAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -168,7 +168,7 @@ namespace Tests
         [Test]
         public void SingleOrDefaultMethodWithOverloadAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -189,7 +189,7 @@ namespace Tests
         [Test]
         public void ElementAtMethodAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -210,7 +210,7 @@ namespace Tests
         [Test]
         public void ElementAtWithSkipMethodAddsIncludedEntities()
         {
-            using (var db = new DBContext())
+            using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
 
@@ -219,6 +219,48 @@ namespace Tests
 
                 query = query.Include(x => x.Spouse);
                 var p = query.ElementAt(1);
+
+                Assert.IsNotNull(p.Spouse);
+                Assert.AreEqual(p.PersonId, 2);
+            }
+        }
+
+
+        [Test]
+        public void FirstMethodAddsIncludedEntitiesWithCompositeKey()
+        {
+            using (var db = new DBContext(_mapper2))
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where
+                                q.FirstName == "Jim"
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.First();
+
+                Assert.IsNotNull(p.Spouse);
+                Assert.AreEqual(p.PersonId, 2);
+            }
+        }
+
+
+        [Test]
+        public void FirstMethodAddsIncludedEntitiesWithNoPrimaryKey()
+        {
+            using (var db = new DBContext(_mapper3))
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where
+                                q.FirstName == "Jim"
+                            select q;
+
+                query = query.Include(x => x.Spouse);
+                var p = query.First();
 
                 Assert.IsNotNull(p.Spouse);
                 Assert.AreEqual(p.PersonId, 2);
@@ -250,57 +292,68 @@ namespace Tests
 
         }
 
+        private static Action<FluentMappingBuilder> _mapper1 = builder =>
+        {
+
+            builder.Entity<Person>()
+                .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId)
+                .Property(x => x.PersonId).IsIdentity().IsPrimaryKey().IsNullable(false)
+                .Property(x => x.FirstName).HasLength(100).IsNullable(false)
+                .Property(x => x.LastName).HasLength(100).IsNullable(false)
+                .Property(x => x.Dob).IsNullable(false)
+                .Property(x => x.Salary).IsNullable(false)
+                .Property(x => x.Weight).IsNullable(false)
+                .Property(x => x.SpouseId).IsNullable()
+                .Property(x => x.Spouse).IsNotColumn().Association(x => x.Spouse, p => p.SpouseId, s => s.PersonId)
+                .Property(x => x.Orders).IsNotColumn();
+        };
+
+
+
+        private static Action<FluentMappingBuilder> _mapper2 = builder =>
+        {
+
+            builder.Entity<Person>()
+                .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId)
+                .Property(x => x.PersonId).IsIdentity().IsPrimaryKey(1).IsNullable(false)
+                .Property(x => x.FirstName).IsPrimaryKey(2).HasLength(100).IsNullable(false)
+                .Property(x => x.LastName).HasLength(100).IsNullable(false)
+                .Property(x => x.Dob).IsNullable(false)
+                .Property(x => x.Salary).IsNullable(false)
+                .Property(x => x.Weight).IsNullable(false)
+                .Property(x => x.SpouseId).IsNullable()
+                .Property(x => x.Spouse).IsNotColumn().Association(x => x.Spouse, p => p.SpouseId, s => s.PersonId)
+                .Property(x => x.Orders).IsNotColumn();
+        };
+
+
+        private static Action<FluentMappingBuilder> _mapper3 = builder =>
+        {
+
+            builder.Entity<Person>()
+                .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId)
+                .Property(x => x.PersonId).IsIdentity().IsNullable(false)
+                .Property(x => x.FirstName).HasLength(100).IsNullable(false)
+                .Property(x => x.LastName).HasLength(100).IsNullable(false)
+                .Property(x => x.Dob).IsNullable(false)
+                .Property(x => x.Salary).IsNullable(false)
+                .Property(x => x.Weight).IsNullable(false)
+                .Property(x => x.SpouseId).IsNullable()
+                .Property(x => x.Spouse).IsNotColumn().Association(x => x.Spouse, p => p.SpouseId, s => s.PersonId)
+                .Property(x => x.Orders).IsNotColumn();
+        };
 
         public class DBContext : DataConnection
         {
-            public DBContext() : base("DBConn")
+            public DBContext(Action<FluentMappingBuilder> mapperFunc) : base("DBConn")
             {
-
                 var builder = MappingSchema.Default.GetFluentMappingBuilder();
-
-                builder.Entity<Person>()
-                    .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId)
-                    .Property(x => x.PersonId).IsIdentity().IsPrimaryKey().IsNullable(false)
-                    .Property(x => x.FirstName).HasLength(100).IsNullable(false)
-                    .Property(x => x.LastName).HasLength(100).IsNullable(false)
-                    .Property(x => x.Dob).IsNullable(false)
-                    .Property(x => x.Salary).IsNullable(false)
-                    .Property(x => x.Weight).IsNullable(false)
-                    .Property(x => x.SpouseId).IsNullable()
-                    .Property(x => x.Spouse).IsNotColumn().Association(x => x.Spouse, p => p.SpouseId, s => s.PersonId)
-                    .Property(x => x.Orders).IsNotColumn();
-
-                builder.Entity<Order>()
-                    .Association(x => x.ProductLines, (o, p) => o.OrderId == p.OrderId, true)
-                    .Property(x => x.OrderId).IsIdentity().IsPrimaryKey().IsNullable(false)
-                    .Property(x => x.OrderNumber).HasLength(100).IsNullable(false)
-                    .Property(x => x.OrderedOn).IsNullable(false).HasSkipOnUpdate()
-                    .Property(x => x.PersonId).IsNullable(false)
-                    .Property(x => x.Person).IsNotColumn()
-                    .HasAttribute(new AssociationAttribute { ThisKey = nameof(Order.PersonId), OtherKey = nameof(Person.PersonId), CanBeNull = false });
-
-                builder.Entity<ProductLine>()
-                    .Inheritance(x => x.ProductLineType, ProductLineType.Normal, typeof(ProductLine), true)
-                    .Inheritance(x => x.ProductLineType, ProductLineType.Extended, typeof(ExtendedProductLine))
-                    .Property(x => x.ProductLineId).IsIdentity().IsPrimaryKey().IsNullable(false)
-                    .Property(x => x.OrderId).IsNullable(false)
-                    .Property(x => x.ProductLineType).IsNullable(false).IsDiscriminator()
-                    .Property(x => x.ProductId).IsNullable(false)
-                    .Property(x => x.ProductCode).HasLength(20).IsNullable(false)
-                    .Association(x => x.Order, p => p.OrderId, o => o.OrderId);
-
-                builder.Entity<ExtendedProductLine>()
-                    .HasAttribute(new TableAttribute { Name = nameof(ProductLine), IsColumnAttributeRequired = true })
-                    .Association(x => x.FirstPerson, (pl, p) => p.PersonId == 1);
+                mapperFunc?.Invoke(builder);
 
                 this.CreateTable<Person>();
-                this.CreateTable<Order>();
-                this.CreateTable<ProductLine>();
             }
 
             public ITable<Person> People => GetTable<Person>();
-            public ITable<Order> Orders => GetTable<Order>();
-            public ITable<ProductLine> ProductLines => GetTable<ProductLine>();
         }
     }
 }
