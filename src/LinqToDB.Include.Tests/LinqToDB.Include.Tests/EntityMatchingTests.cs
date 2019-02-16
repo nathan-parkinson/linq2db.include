@@ -20,6 +20,10 @@ namespace Tests
             DataConnection.DefaultSettings = DataConnection.DefaultSettings ?? new DBConnection();
         }
 
+
+
+
+
         [Test]
         public void ExpressionPredicateAndKeysTest()
         {
@@ -36,8 +40,8 @@ namespace Tests
                 var p = query.ToList();
 
                 Assert.IsTrue(p is List<Person>);
-                Assert.AreEqual(p.Count, 2);
-                Assert.AreEqual(p.Count(x => x.Spouse != null), 1);
+                Assert.AreEqual(p.Count, 1);
+                Assert.AreEqual(p.First().Orders.Count(), 49);
             }
         }
 
@@ -57,8 +61,8 @@ namespace Tests
                 var p = query.ToList();
 
                 Assert.IsTrue(p is List<Person>);
-                Assert.AreEqual(p.Count, 2);
-                Assert.AreEqual(p.Count(x => x.Spouse != null), 1);
+                Assert.AreEqual(p.Count, 1);
+                Assert.AreEqual(p.First().Orders.Count(), 49);
             }
         }
 
@@ -78,8 +82,8 @@ namespace Tests
                 var p = query.ToList();
 
                 Assert.IsTrue(p is List<Person>);
-                Assert.AreEqual(p.Count, 2);
-                Assert.AreEqual(p.Count(x => x.Spouse != null), 1);
+                Assert.AreEqual(p.Count, 1);
+                Assert.AreEqual(p.First().Orders.Count(), 49);
             }
         }
 
@@ -168,17 +172,7 @@ namespace Tests
 
         private Action<FluentMappingBuilder> _mapping3 = builder =>
         {
-            Expression<Func<Person, Order, bool>> personPredicate1 = (p, o) => p.PersonId == o.PersonId && o.OrderId < 99;
-            Expression<Func<Person, Order, bool>> personPredicate2 = (p, o) => p.PersonId == o.PersonId || o.OrderId < 99;
-
-
-            Expression<Func<Person, Order, bool>> personPredicate3 = (p, o) => p.PersonId == o.PersonId && (o.OrderId < 99 || o.OrderId == 104);
-            Expression<Func<Person, Order, bool>> personPredicate4 = (p, o) => p.PersonId == o.PersonId && (o.OrderId < 99 && p.Salary < 9);
-
-            Expression<Func<Person, Order, bool>> personPredicate5 = (p, o) => (p.PersonId == o.PersonId && p.LastName == "Jim") && (o.OrderId < 99 && p.Salary < 9);
-            Expression<Func<Person, Order, bool>> personPredicate6 = (p, o) => (p.PersonId == o.PersonId && p.LastName == "Jim") || (o.OrderId < 99 && p.Salary < 9);
-
-            Expression<Func<Person, Order, bool>> personPredicate = (p, o) => o.OrderId < 99;            
+            Expression<Func<Person, Order, bool>> personPredicate = (p, o) => o.OrderId < 99;
             builder.Entity<Person>()
                 .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId && o.OrderId < 99)
                 .Property(x => x.PersonId).IsIdentity().IsPrimaryKey().IsNullable(false)
@@ -223,13 +217,15 @@ namespace Tests
         {
             public DBContext(Action<FluentMappingBuilder> mappings) : base("DBConn")
             {
-                var builder = MappingSchema.Default.GetFluentMappingBuilder();
+                var schema = new MappingSchema();
+                var builder = schema.GetFluentMappingBuilder();
 
                 mappings?.Invoke(builder);
 
+                this.AddMappingSchema(schema);
 
                 this.CreateTable<Person>();
-                this.CreateTable<Order>();                
+                this.CreateTable<Order>();
             }
 
             public ITable<Person> People => GetTable<Person>();

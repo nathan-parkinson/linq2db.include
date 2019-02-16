@@ -255,8 +255,8 @@ namespace Tests
         {
             public DBContext() : base("DBConn")
             {
-
-                var builder = MappingSchema.Default.GetFluentMappingBuilder();
+                var schema = new MappingSchema();
+                var builder = schema.GetFluentMappingBuilder();
 
                 builder.Entity<Person>()
                     .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId)
@@ -292,6 +292,8 @@ namespace Tests
                 builder.Entity<ExtendedProductLine>()
                     .HasAttribute(new TableAttribute { Name = nameof(ProductLine), IsColumnAttributeRequired = true })
                     .Association(x => x.FirstPerson, (pl, p) => p.PersonId == 1);
+
+                this.AddMappingSchema(schema);
 
                 this.CreateTable<Person>();
                 this.CreateTable<Order>();
