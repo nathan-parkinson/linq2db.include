@@ -8,26 +8,82 @@ using System.Threading.Tasks;
 
 namespace LinqToDB.Include
 {
-    public class MatchWalker : ExpressionVisitor
+    public class EntityMatchWalker : ExpressionVisitor
     {
         private bool _ignore = false;
         private bool _isNot = false;
 
         private Expression _expression;
 
-        private MatchWalker()
-        {
+        private readonly List<Expression> _thisKey = new List<Expression>();
+        private readonly List<Expression> _otherKey = new List<Expression>();
 
+        private readonly ParameterExpression _thisParam;
+        private readonly ParameterExpression _otherParam;
+
+        private EntityMatchWalker(ParameterExpression thisParameter, ParameterExpression otherParameter)
+        {
+            _thisParam = thisParameter;
+            _otherParam = otherParameter;
         }
-
-        public static Expression ExtractKeyNodes(Expression expression)
+        
+        public static Tuple<List<Expression>, List<Expression>> ExtractKeyNodes(Expression expression, ParameterExpression thisParameter, ParameterExpression otherParameter)
         {
-            var walker = new MatchWalker();
+            var walker = new EntityMatchWalker(thisParameter, otherParameter);
             walker.Visit(expression);
-            return walker._expression;
+            return Tuple.Create(walker._thisKey, walker._otherKey);
         }
 
-        private static ExpressionType[] _validAccessors = { ExpressionType.MemberAccess, ExpressionType.Constant };        
+        private static ExpressionType[] _validAccessors = { ExpressionType.MemberAccess, ExpressionType.Constant };
+
+
+        private void AddKeysToList(BinaryExpression node)
+        {
+            if (node.NodeType == ExpressionType.Equal)
+            {
+                bool? isLeftThisKey = null;
+                switch (node.Left)
+                {
+                    case MemberExpression property:
+                        isLeftThisKey = property.Expression == _thisParam;
+                        break;
+                    case ConstantExpression constant:
+                        break;
+                    default:
+                        throw new ArgumentException($"Only Expressions of type '{nameof(ExpressionType.MemberAccess)}'" +
+                            $" or '{nameof(ExpressionType.Constant)}' can be used as keys");
+                }
+
+                switch (node.Right)
+                {
+                    case MemberExpression property:
+                        isLeftThisKey = property.Expression != _thisParam;
+                        break;
+                    case ConstantExpression constant:
+                        break;
+                    default:
+                        throw new ArgumentException($"Only Expressions of type '{nameof(ExpressionType.MemberAccess)}'" +
+                            $" or '{nameof(ExpressionType.Constant)}' can be used as keys");
+                }
+
+                if (!isLeftThisKey.HasValue)
+                {
+                    throw new ArgumentException($"At least one part of '{nameof(BinaryExpression)}' must " +
+                        $"relate to table field");
+                }
+
+                if (isLeftThisKey.HasValue)
+                {
+                    _thisKey.Add(node.Left);
+                    _otherKey.Add(node.Right);
+                }
+                else
+                {
+                    _thisKey.Add(node.Right);
+                    _otherKey.Add(node.Left);
+                }
+            }
+        }
 
         protected override Expression VisitBinary(BinaryExpression node)
         {
@@ -41,6 +97,7 @@ namespace LinqToDB.Include
                     _validAccessors.Contains(node.Right.NodeType) &&
                     _validAccessors.Contains(node.Left.NodeType))
                 {
+                    AddKeysToList(node);
                     _expression = _expression == null ? node : Expression.AndAlso(_expression, node);
                 }
             }
