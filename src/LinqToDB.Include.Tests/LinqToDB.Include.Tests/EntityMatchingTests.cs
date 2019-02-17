@@ -88,6 +88,40 @@ namespace Tests
         }
 
 
+        [Test]
+        public void KeyExtractionTest()
+        {
+            //Expression<Func<Person, Order, bool>> exp = (p, o) => p.PersonId == o.PersonId && p.LastName == o.OrderNumber;
+
+            Expression<Func<Person, Order, bool>> exp = (p, o) => p.PersonId == o.PersonId && "S0003456" == o.OrderNumber;
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+        }
+
+
+        [Test]
+        public void EntityMatchWithNoEqualsPartToOnClause()
+        {
+            using (var db = new DBContext(_mapping4))
+            {
+                AddData(db);
+
+                var query = from q in db.People
+                            where
+                                q.Orders.Any(x => x.OrderNumber == "00004")
+                            select q;
+
+                query = query.Include(x => x.Orders);
+                var p = query.ToList();
+
+                Assert.IsTrue(p is List<Person>);
+                Assert.AreEqual(p.Count, 1);
+                Assert.AreEqual(p.First().Orders.Count(), 49);
+            }
+        }
 
         private static void AddData(DBContext db)
         {
@@ -211,6 +245,30 @@ namespace Tests
         };
 
 
+
+        private Action<FluentMappingBuilder> _mapping4 = builder =>
+        {
+            builder.Entity<Person>()
+                .Association(x => x.Orders, (p, o) => p.PersonId <= o.PersonId && o.OrderId < 99)
+                .Property(x => x.PersonId).IsIdentity().IsPrimaryKey().IsNullable(false)
+                .Property(x => x.FirstName).HasLength(100).IsNullable(false)
+                .Property(x => x.LastName).HasLength(100).IsNullable(false)
+                .Property(x => x.Dob).IsNullable(false)
+                .Property(x => x.Salary).IsNullable(false)
+                .Property(x => x.Weight).IsNullable(false)
+                .Property(x => x.SpouseId).IsNullable()
+                .Property(x => x.Spouse).IsNotColumn()
+                .Property(x => x.Orders).IsNotColumn();
+
+            builder.Entity<Order>()
+                        .Association(x => x.Person, (o, p) => p.PersonId <= o.PersonId && o.OrderId < 99)
+                        .Property(x => x.ProductLines).IsNotColumn()
+                        .Property(x => x.OrderId).IsIdentity().IsPrimaryKey().IsNullable(false)
+                        .Property(x => x.OrderNumber).HasLength(100).IsNullable(false)
+                        .Property(x => x.OrderedOn).IsNullable(false).HasSkipOnUpdate()
+                        .Property(x => x.PersonId).IsNullable(false)
+                        .Property(x => x.Person).IsNotColumn();
+        };
 
 
         public class DBContext : DataConnection

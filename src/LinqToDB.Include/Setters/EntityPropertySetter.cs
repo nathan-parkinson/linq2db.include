@@ -44,76 +44,71 @@ namespace LinqToDB.Include
             var otherKeyExpressions = keyTuple.Item2;
 
 
-            //TODO, improve below query, perhaps with IEquatable class
-            //Can ThisKey and OtherKey be null
-            var otherKeys = otherKeyExpressions.OfType<ConstantExpression>().Select(x => new
+            var otherKeys = otherKeyExpressions.OfType<ConstantExpression>().Select(x => new KeyHolder
             {
                 Constant = x,
-                Type = KeyType.Constant,
-                Key = default(string)
+                Type = KeyType.Constant
             })
             .Union(
-                otherKeyExpressions.OfType<MemberExpression>().Select(x => new
+                otherKeyExpressions.OfType<MemberExpression>().Select(x => new KeyHolder
                 {
-                    Constant = default(ConstantExpression),
                     Type = KeyType.Property,
                     Key = x.Member.Name
                 })
             ).Union(
-                schema.AssociationDescriptor.OtherKey.Select(x => new
+                schema.AssociationDescriptor.OtherKey.Select(x => new KeyHolder
                 {
-                    Constant = default(ConstantExpression),
                     Type = KeyType.Property,
                     Key = x
                 })
-            ).Distinct().Select(x => new KeyHolder
-            {
-                Constant = x.Constant,
-                Key = x.Key,
-                Type = x.Type
-            }).ToList();
+            ).Distinct()
+             .ToList();
 
 
 
 
-            var thisKeys = thisKeyExpressions.OfType<ConstantExpression>().Select(x => new
+            var thisKeys = thisKeyExpressions.OfType<ConstantExpression>().Select(x => new KeyHolder
             {
                 Constant = x,
-                Type = KeyType.Constant,
-                Key = default(string)
+                Type = KeyType.Constant
             })
             .Union(
-                thisKeyExpressions.OfType<MemberExpression>().Select(x => new
+                thisKeyExpressions.OfType<MemberExpression>().Select(x => new KeyHolder
                 {
-                    Constant = default(ConstantExpression),
                     Type = KeyType.Property,
                     Key = x.Member.Name
                 })
             ).Union(
-                schema.AssociationDescriptor.ThisKey.Select(x => new
+                schema.AssociationDescriptor.ThisKey.Select(x => new KeyHolder
                 {
-                    Constant = default(ConstantExpression),
                     Type = KeyType.Property,
                     Key = x
                 })
-            ).Distinct().Select(x => new KeyHolder
+            ).Distinct()
+             .ToList();
+
+
+            if (otherKeys.Any() && thisKeys.Any())
             {
-                Constant = x.Constant,
-                Key = x.Key,
-                Type = x.Type
-            }).ToList();
+                var childHasherExpression = CreateHashCodeExpression<TChild>(otherKeys);
+                var childHasher = childHasherExpression.Compile();
+                var childLookup = childEntities.ToLookup(childHasher);
 
+                var parentHasherExpression = CreateHashCodeExpression<TParent>(thisKeys);
+                var parentHasher = parentHasherExpression.Compile();
 
+                MatchEntityLookup(schema, parentEntities, predicateFunc, childLookup, parentHasher);
+            }
+            else
+            {
+                MatchEntityList(schema, parentEntities, childEntities, predicateFunc);
+            }
+        }
 
-
-
-            var childHasherExpression = CreateHashCodeExpression<TChild>(otherKeys);
-            var childHasher = childHasherExpression.Compile();
-            var childLookup = childEntities.ToLookup(childHasher);
-
-            var parentHasherExpression = CreateHashCodeExpression<TParent>(thisKeys);
-            var parentHasher = parentHasherExpression.Compile();
-
+        private static void MatchEntityLookup<TParent, TChild>(PropertyAccessor<TParent, TChild> schema, IList<TParent> parentEntities, Func<TParent, TChild, bool> predicateFunc, ILookup<int, TChild> childLookup, Func<TParent, int> parentHasher)
+            where TParent : class
+            where TChild : class
+        {
             if (schema.IsMemberTypeICollection)
             {
                 var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName,
@@ -125,7 +120,8 @@ namespace LinqToDB.Include
                 {
                     ifnullSetter(item);
 
-                    foreach (var childEntity in childLookup[parentHasher(item)].Where(x => predicateFunc(item, x)))
+                    foreach (var childEntity in childLookup[parentHasher(item)]
+                                                    .Where(x => predicateFunc(item, x)))
                     {
                         setter(item, childEntity);
                     }
@@ -146,6 +142,38 @@ namespace LinqToDB.Include
             }
         }
 
+        private static void MatchEntityList<TParent, TChild>(PropertyAccessor<TParent, TChild> schema, IList<TParent> parentEntities, IList<TChild> childEntities, Func<TParent, TChild, bool> predicateFunc)
+            where TParent : class
+            where TChild : class
+        {
+            if (schema.IsMemberTypeICollection)
+            {
+                var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName,
+                    schema.MemberType);
+
+                var ifnullSetter = schema.DeclaringType.CreatePropertySetup<TParent, TChild>(schema.PropertyName);
+
+                foreach (var item in parentEntities)
+                {
+                    ifnullSetter(item);
+                    foreach (var childEntity in childEntities.Where(x => predicateFunc(item, x)))
+                    {
+                        setter(item, childEntity);
+                    }
+                }
+            }
+            else
+            {
+                var setter = schema.DeclaringType.CreatePropertySetter<TParent, TChild>(schema.PropertyName);
+
+                foreach (var item in parentEntities)
+                {
+                    var childEntity = childEntities.FirstOrDefault(x => predicateFunc(item, x));
+                    setter(item, childEntity);
+                }
+            }
+        }
+
         private static int MakeHashCode<T>(int val, T property)
         {
             if (property != null)
@@ -158,30 +186,38 @@ namespace LinqToDB.Include
 
             return val;
         }
-
-        private static Expression<Func<T, int>> CreateHashCodeExpressionOld<T>(string[] propertyNames) where T : class
-        {
-            var param2 = Expression.Parameter(typeof(T), "p");
-            Expression exp = Expression.Constant(17, typeof(int));
-            var type = typeof(T);
-            foreach (var propertyName in propertyNames)
-            {
-                var property = type.GetProperty(propertyName);
-                exp = Expression.Call(typeof(EntityPropertySetter), nameof(MakeHashCode), new Type[]
-                {
-                    property.PropertyType
-                }, exp, Expression.Property(param2, property));
-            }
-
-            var func = Expression.Lambda<Func<T, int>>(exp, param2);
-            return func;
-        }
-
-        private class KeyHolder
+        
+        private class KeyHolder : IEquatable<KeyHolder>
         {
             public string Key { get; set; }
             public KeyType Type { get; set; }
             public ConstantExpression Constant { get; set; }
+
+            public bool Equals(KeyHolder other)
+            {
+                return other != null && Key == other.Key && Type == other.Type && Constant?.Value == other.Constant?.Value;                
+            }
+            
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hash = 17;
+                    // Suitable nullity checks etc, of course :)
+                    hash = hash * 23 + Type.GetHashCode();
+                    if (Key != null)
+                    {
+                        hash = hash * 23 + Key.GetHashCode();
+                    }
+
+                    if(Constant != null)
+                    {
+                        hash = hash * 23 + Constant.Value.GetHashCode();
+                    }
+
+                    return hash;
+                }
+            }
         }
 
         private enum KeyType
