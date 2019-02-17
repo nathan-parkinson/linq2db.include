@@ -347,8 +347,11 @@ namespace Tests
         {
             public DBContext(Action<FluentMappingBuilder> mapperFunc) : base("DBConn")
             {
-                var builder = MappingSchema.Default.GetFluentMappingBuilder();
+                var schema = new MappingSchema();
+                var builder = schema.GetFluentMappingBuilder();
+
                 mapperFunc?.Invoke(builder);
+                this.AddMappingSchema(schema);
 
                 this.CreateTable<Person>();
             }
