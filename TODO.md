@@ -1,6 +1,5 @@
 ﻿* Implement ThenInclude
 * Automatically handle back-references
-* Implement isSlowQuery (In\TempTable)
 * Async
 * Add Unit Testing
 * Make entire querybuilder into a compiled func so different queries can use the same func
@@ -8,13 +7,11 @@
 	Use AssociationDescriptor.GetHashCode() as the Key
 
 * All deleting and\or clearing of items in accessor override ConcurrentDictionary
-* Improve setter perfomance when using predicate expression to match parent\child entities
 
-* Test CustomAccessors
-* Create AccessorNotFoundException
 
 
 Things to test:
+* Test CustomAccessors
 * Nested Loading
 * Nested Loading of inherited types at nested and root level
 * Joining different types
@@ -32,6 +29,4 @@ Things to test:
 * Changing TClass of IncludabelQueryable clears rootaccessor
 
 
-update readme.md
 add wiki
-add to nuget (pre-release)

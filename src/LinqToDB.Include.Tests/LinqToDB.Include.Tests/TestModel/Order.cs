@@ -15,6 +15,6 @@ namespace LinqToDB.Include.Tests.TestModel
         public Person Person { get; set; }
         public List<ProductLine> ProductLines { get; set; } = new List<ProductLine>();
 
-        public static Expression<Func<Order, Person, bool>> ExtraJoinOptions = (o, p) => o.PersonId == p.PersonId && p.FirstName != o.OrderNumber;
+        public static Expression<Func<Order, Person, bool>> ExtraJoinOptions() => (o, p) => o.OrderId < 99;
     }
 }

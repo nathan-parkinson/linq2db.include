@@ -149,10 +149,12 @@ namespace Tests
         {
             public DBContext() : base("DBConn")
             {
-                var builder = MappingSchema.Default.GetFluentMappingBuilder();
+                var schema = new MappingSchema();
+                var builder = schema.GetFluentMappingBuilder();
 
                 builder.Entity<Person>()
                     .Association(x => x.Orders, (p, o) => p.PersonId == o.PersonId)
+                    .Association(x => x.Spouse, p => p.SpouseId, s => s.PersonId)
                     .Property(x => x.PersonId).IsIdentity().IsPrimaryKey().IsNullable(false)
                     .Property(x => x.FirstName).HasLength(100).IsNullable(false)
                     .Property(x => x.LastName).HasLength(100).IsNullable(false)
@@ -160,7 +162,7 @@ namespace Tests
                     .Property(x => x.Salary).IsNullable(false)
                     .Property(x => x.Weight).IsNullable(false)
                     .Property(x => x.SpouseId).IsNullable()
-                    .Property(x => x.Spouse).IsNotColumn().Association(x => x.Spouse, p => p.SpouseId, s => s.PersonId)
+                    .Property(x => x.Spouse).IsNotColumn()
                     .Property(x => x.Orders).IsNotColumn();
 
                 builder.Entity<Order>()
@@ -185,6 +187,8 @@ namespace Tests
                 builder.Entity<ExtendedProductLine>()
                     .HasAttribute(new TableAttribute { Name = nameof(ProductLine), IsColumnAttributeRequired = true })
                     .Association(x => x.FirstPerson, (pl, p) => p.PersonId == 1);
+
+                this.AddMappingSchema(schema);
 
                 this.CreateTable<Person>();
                 this.CreateTable<Order>();
