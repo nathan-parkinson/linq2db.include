@@ -10,7 +10,7 @@ namespace LinqToDB.Include
         Type MemberEntityType { get; }
         HashSet<IPropertyAccessor> Properties { get; }
         string PropertyName { get; }
-        bool IsMemberTypeICollection { get; }
+        bool IsMemberTypeIEnumerable { get; }
 
 
         IPropertyAccessor FindAccessor(List<string> pathParts);

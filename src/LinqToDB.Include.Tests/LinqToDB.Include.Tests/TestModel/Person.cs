@@ -18,7 +18,7 @@ namespace LinqToDB.Include.Tests.TestModel
         public int? SpouseId { get; set; }
         public Person Spouse { get; set; }
 
-        public List<Order> Orders { get; set; } = new List<Order>();
+        public IEnumerable<Order> Orders { get; set; } = new List<Order>();
 
         public static Expression<Func<Person, Order, bool>> ExtraJoinOptions() => (p, o) => o.OrderId < 99;        
     }

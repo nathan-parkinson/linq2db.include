@@ -33,7 +33,9 @@ namespace LinqToDB.Include
             {
                 if (type.IsInterface)
                 {
-                    return type.GetGenericTypeDefinition().GetInterfaces()
+                    var def = type.GetGenericTypeDefinition();
+
+                    return def == typeof(IEnumerable<>) || type.GetGenericTypeDefinition().GetInterfaces()
                                 .Any(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>));                    
                 }
 
@@ -45,28 +47,7 @@ namespace LinqToDB.Include
 
             return false;
         }
-
-        internal static bool IsICollection(this Type type)
-        {
-            if (type.IsGenericType)
-            {
-                if (type.IsInterface)
-                {
-                    var def = type.GetGenericTypeDefinition();
-
-                    return def == typeof(ICollection<>) ||
-                        def.GetInterfaces().Any(x => x.GetGenericTypeDefinition() == typeof(ICollection<>));
-                }
-
-                var genericTypeDefinition = type.GetGenericTypeDefinition();
-
-                return genericTypeDefinition.GetInterfaces()
-                            .Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(ICollection<>));
-            }
-
-            return false;
-        }
-
+        
         internal static Action<TElement, TValue> CreatePropertySetter<TElement, TValue>(
             this Type elementType, string propertyName)
         {
@@ -81,38 +62,16 @@ namespace LinqToDB.Include
             return action.Compile();
         }
 
-        [Obsolete]
-        internal static Action<TElement, ICollection<TValue>> CreateICollectionPropertySetter<TElement, TValue>(
-            this Type elementType, string propertyName)
-        {
-            var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-            var mi = pi.GetSetMethod();
-
-            var oParam = Expression.Parameter(elementType, "obj");
-            var vParam = Expression.Parameter(typeof(ICollection<TValue>), "val");
-            var mce = Expression.Call(oParam, mi, vParam);
-
-            var clearMethod = Expression.Call(vParam, typeof(ICollection<TValue>).GetMethod("Clear"));
-            var ifCriteria = Expression.Equal(Expression.Call(oParam, pi.GetGetMethod()), Expression.Constant(null));
-            var ifnullSetter = Expression.IfThenElse(ifCriteria, mce, clearMethod);
-
-            var action = Expression.Lambda<Action<TElement, ICollection<TValue>>>(ifnullSetter, oParam, vParam);
-
-            return action.Compile();
-        }
-
-        
-
         internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(
                 this Type elementType, string propertyName, Type propertyType)
         {
-            var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);            
-            var mi = pi.GetSetMethod();
-
             var oParam = Expression.Parameter(elementType, "obj");
             var vParam = Expression.Parameter(typeof(TValue), "val");
-            var mce = Expression.Call(Expression.Property(oParam, propertyName), 
-                            typeof(ICollection<TValue>).GetMethod("Add"), vParam);
+            var mce = Expression.Call(
+                            Expression.Convert(
+                                Expression.Property(oParam, propertyName)
+                            , typeof(ICollection<TValue>))
+                      , typeof(ICollection<TValue>).GetMethod("Add"), vParam);
 
             var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
 
@@ -153,9 +112,7 @@ namespace LinqToDB.Include
             var mi = pi.GetSetMethod();
             var mce = Expression.Call(parentParam, mi, newCollection);
             
-            var @if = Expression.IfThenElse(isParamNull,
-                mce,
-                Expression.Call(property, typeof(ICollection<TChild>).GetMethod(nameof(ICollection<int>.Clear))));
+            var @if = Expression.IfThen(isParamNull, mce);
 
             var finalCode = Expression.Lambda<Action<TParent>>(@if, parentParam);
 
@@ -183,7 +140,7 @@ namespace LinqToDB.Include
                 {
                     typeNum = 2;
                 }
-                else if (def == typeof(ICollection<>))
+                else if (def == typeof(ICollection<>) || def == typeof(IEnumerable<>))
                 {
                     typeNum = 3;
                 }
