@@ -11,7 +11,7 @@ namespace LinqToDB.Include
         protected Type _declaringType;
         protected Type _memberType;
         protected Type _memberEntityType;
-        protected bool _isMemberTypeICollection;
+        protected bool _isMemberTypeIEnumerable;
         protected bool _isMemberEntityTypeIEnumerable;
 
         internal abstract void Load(List<TClass> entities, IQueryable<TClass> query);
@@ -21,7 +21,7 @@ namespace LinqToDB.Include
         public Type MemberType { get => _memberType; }
         public Type MemberEntityType { get => _memberEntityType; }
 
-        public bool IsMemberTypeICollection { get => _isMemberTypeICollection; }
+        public bool IsMemberTypeIEnumerable { get => _isMemberTypeIEnumerable; }
         public bool IsMemberEntityTypeIEnumerable { get => _isMemberEntityTypeIEnumerable; }
 
         public abstract HashSet<IPropertyAccessor> Properties { get; }
