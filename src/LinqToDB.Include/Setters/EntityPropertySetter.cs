@@ -109,7 +109,7 @@ namespace LinqToDB.Include
             where TParent : class
             where TChild : class
         {
-            if (schema.IsMemberTypeICollection)
+            if (schema.IsMemberTypeIEnumerable)
             {
                 var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName,
                     schema.MemberType);
@@ -146,7 +146,7 @@ namespace LinqToDB.Include
             where TParent : class
             where TChild : class
         {
-            if (schema.IsMemberTypeICollection)
+            if (schema.IsMemberTypeIEnumerable)
             {
                 var setter = schema.DeclaringType.CreateCollectionPropertySetter<TParent, TChild>(schema.PropertyName,
                     schema.MemberType);

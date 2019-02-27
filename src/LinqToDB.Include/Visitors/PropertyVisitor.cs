@@ -15,11 +15,11 @@ namespace LinqToDB.Include
         {
             _rootAccessor = rootAccessor;
         }
-        
+
         private static void AddFilterForDynamicType<T, TProperty>(IPropertyAccessor<T> accessor,
-    Expression<Func<TProperty, bool>> includeFilter)
-    where T : class
-    where TProperty : class
+                Expression<Func<TProperty, bool>> includeFilter)
+                where T : class
+                where TProperty : class
         {
             var accessorImpl = accessor as PropertyAccessor<T, TProperty>;
             if (accessorImpl == null)
@@ -29,7 +29,7 @@ namespace LinqToDB.Include
             accessorImpl.AddFilter(includeFilter);
         }
 
-        public IRootAccessor<TClass> MapProperties<TProperty>(Expression<Func<TClass, TProperty>> expr, 
+        public IRootAccessor<TClass> MapProperties<TProperty>(Expression<Func<TClass, TProperty>> expr,
             Expression<Func<TProperty, bool>> includeFilter = null)
             where TProperty : class
         {
@@ -41,7 +41,7 @@ namespace LinqToDB.Include
             {
                 _rootAccessor.Properties.Add(accessor);
             }
-            
+
             if (includeFilter != null)
             {
                 if (latestAccessor is PropertyAccessor<TClass, TProperty> accessorImpl)
@@ -53,8 +53,8 @@ namespace LinqToDB.Include
                     //can type checking be added here?
                     var propertyAccessor = _rootAccessor.GetByPath(PathWalker.GetPath(expr));
                     dynamic dynamicAccessor = propertyAccessor;
-                    AddFilterForDynamicType(dynamicAccessor, includeFilter);                    
-                }                
+                    AddFilterForDynamicType(dynamicAccessor, includeFilter);
+                }
             }
 
             return _rootAccessor;
@@ -99,7 +99,7 @@ namespace LinqToDB.Include
             var declaringType = GetTypeToUse(node.Member.DeclaringType);
             var nodeType = GetTypeToUse(node.Type);
 
-            if (latestAccessor != null && latestAccessor.DeclaringType == declaringType && 
+            if (latestAccessor != null && latestAccessor.DeclaringType == declaringType &&
                 latestAccessor.PropertyName == node.Member.Name)
             {
                 return latestAccessor;
@@ -125,9 +125,9 @@ namespace LinqToDB.Include
             {
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
 
-                if (genericTypeDefinition.GetInterfaces()
-                            .Any(t => t.IsGenericType &&
-                                      t.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+                if (genericTypeDefinition == typeof(IEnumerable<>) ||
+                    genericTypeDefinition.GetInterfaces().Any(t => t.IsGenericType &&
+                                                t.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
                 {
                     return type.GetGenericArguments()[0];
                 }

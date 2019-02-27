@@ -18,7 +18,7 @@ namespace LinqToDB.Include
             _declaringType = exp.Member.DeclaringType;
             _memberType = exp.Type;
             _memberEntityType = typeof(TProperty);
-            _isMemberTypeICollection = _memberType.IsICollection();
+            _isMemberTypeIEnumerable = _memberType.IsIEnumerable();
             _isMemberEntityTypeIEnumerable = _memberEntityType.IsIEnumerable();
 
             ChildEntityDescriptor = mappingSchema.GetEntityDescriptor(_memberEntityType);
