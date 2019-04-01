@@ -1,33 +1,106 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace LinqToDB.Include.Setters
 {
-    class QueryPool
+    interface IGenericProcessor
+    {
+        IEnumerable<T> Process<T>(EntityPool entityPool, IDataContext db, IEnumerable<T> entities) where T : class;
+    }
+
+    class GenericProcessor : IGenericProcessor
+    {
+        private static readonly Type _objType = typeof(object);
+        private static readonly Type _valueType = typeof(ValueType);
+        private static ConcurrentDictionary<Type, Func<IEnumerable, IEnumerable>> _processors = new ConcurrentDictionary<Type, Func<IEnumerable, IEnumerable>>();
+
+        private GenericProcessor()
+        {
+
+        }
+
+        internal static List<T> ProcessEntities<T>(EntityPool queryPool, IDataContext db, IEnumerable<T> entities) where T : class
+        {
+            return new GenericProcessor().Process(queryPool, db, entities).ToList();
+        }
+
+        public IEnumerable<T> Process<T>(EntityPool entityPool, IDataContext db, IEnumerable<T> entities) where T : class
+        {
+            var type = typeof(T);
+            var baseType = GetRealBaseType(type);
+
+            //TODO Only build this once
+            var instance = Expression.Parameter(typeof(EntityPool), "qp");
+            var contextParam = Expression.Parameter(typeof(IDataContext), "db");
+            var entitiesParam = Expression.Parameter(typeof(IEnumerable<T>), "entities");
+
+            //use this to call the process entities method
+            var methodExpr = Expression.Call(instance, nameof(EntityPool.ProcessEntities),
+                new Type[] { type, baseType },
+                contextParam,
+                entitiesParam);
+
+            var lambda = Expression.Lambda<Func<EntityPool, IDataContext, IEnumerable<T>, IEnumerable<T>>>(methodExpr,
+                instance,
+                contextParam,
+                entitiesParam);
+
+            var func = lambda.Compile();
+
+            var result = func(entityPool, db, entities);
+
+
+            //_processors.TryAdd(type, );
+
+
+            return result;
+        }
+
+        private Type GetRealBaseType(Type type)
+        {
+            var baseType = type.BaseType;
+            var objType = typeof(object);
+
+            while (baseType != objType && baseType != typeof(ValueType) && !type.IsInterface && !baseType.IsInterface)
+            {
+                type = baseType;
+                baseType = type.BaseType;
+            }
+
+            return type;
+        }
+    }
+
+    class EntityPool
     {
         private readonly Dictionary<Type, ITypePool> _typeBag = new Dictionary<Type, ITypePool>();
 
-        internal ILookup<int, T> GetEntitiesOfType<T, TBase>(Func<T, int> fkFunc) 
-            where TBase : class 
-            where T : class, TBase 
+
+
+
+        internal ILookup<int, T> GetEntitiesOfType<T, TBase>(Func<T, int> fkFunc)
+            where TBase : class
+            where T : class, TBase
         {
             var baseType = typeof(TBase);
-            if(!_typeBag.ContainsKey(baseType))
+            if (!_typeBag.ContainsKey(baseType))
             {
-                return null; 
+                return null;
             }
-            
+
             var typePoolDict = _typeBag[baseType] as TypePoolDict<TBase>;
             var lookup = typePoolDict.GetEntityLookupOfType<T>(fkFunc);
             return lookup;
         }
 
-        internal IEnumerable<T> ProcessEntities<T, TBase>(IDataContext db, IEnumerable<T> entities) 
-            where TBase : class 
+        internal IEnumerable<T> ProcessEntities<T, TBase>(IDataContext db, IEnumerable<T> entities)
+            where TBase : class
             where T : class, TBase
         {
             var baseType = typeof(TBase);
@@ -39,7 +112,7 @@ namespace LinqToDB.Include.Setters
                            orderby x.PrimaryKeyOrder
                            select x.MemberName;
 
-            if(!pkFields.Any())
+            if (!pkFields.Any())
             {
                 return entities;
             }
@@ -56,7 +129,7 @@ namespace LinqToDB.Include.Setters
             var typePoolDict = _typeBag[baseType] as TypePoolDict<TBase>;
             var entitiesAndKeys = entities.Select(x => new { Key = pkFunc(x), Entity = x }).ToList();
             var lookup = entitiesAndKeys.ToLookup(x => x.Key, x => x.Entity);
-            
+
             foreach (var grouping in lookup)
             {
                 if (!typePoolDict.ContainsKey(grouping.Key))
@@ -64,7 +137,7 @@ namespace LinqToDB.Include.Setters
                     typePoolDict[grouping.Key] = grouping.First();
                 }
             }
-            
+
             var deDupeData = entitiesAndKeys.Select(l => typePoolDict[l.Key]).OfType<T>().ToList();
             return deDupeData;
         }
@@ -77,7 +150,7 @@ namespace LinqToDB.Include.Setters
         ILookup<int, T1> GetEntityLookupOfType<T1>(Func<T1, int> fkFunc) where T1 : class, T;
     }
 
-    class TypePoolDict<T> : IDictionary<int, T> where T : class
+    class TypePoolDict<T> : ITypePoolDict<T> where T : class
     {
         private readonly IDictionary<int, T> _dict = new Dictionary<int, T>();
 

@@ -22,6 +22,11 @@ namespace LinqToDB.Include
             where TProperty : class
                 => includable.AddExpression(expr, propertyFilter);
 
+
+        public static IIncludableQueryable<TClass> ToIncludableQueryable<TClass>(this IQueryable<TClass> query) 
+            where TClass : class
+            => new IncludableQueryable<TClass>(query);
+
         /*
         public static List<TClass> ToList<TClass>(this IIncludableQueryable<TClass> includable)
             where TClass : class

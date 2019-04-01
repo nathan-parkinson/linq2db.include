@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using LinqToDB.Include.Setters;
+using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -85,7 +86,7 @@ namespace LinqToDB.Include
 
         }
 
-        internal override void Load(List<TClass> entities, IQueryable<TClass> query)
+        internal override void Load(EntityPool entityPool, List<TClass> entities, IQueryable<TClass> query)
         {
             if(!(entities?.Any() ?? false))
             {
@@ -93,7 +94,10 @@ namespace LinqToDB.Include
             }
             //get query
             var propertyEntities = ExecuteQuery(query);
-
+            //TODO add test here to make sure that it doesn't need the same deDupe process 
+            //adding that was used in LoadMap (i.e. .Clear .AddRange)
+            propertyEntities = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), propertyEntities);
+            
             IQueryable<TProperty> reusableQuery = null;
             //run nested properties
             //TODO make sure the base member is always executed first in case
@@ -107,12 +111,12 @@ namespace LinqToDB.Include
 
                 if (propertyAccessor is PropertyAccessor<TProperty> accessorImpl)
                 {
-                    accessorImpl.Load(propertyEntities, reusableQuery);
+                    accessorImpl.Load(entityPool, propertyEntities, reusableQuery);
                 }
                 else if (MemberEntityType.IsAssignableFrom(propertyAccessor.DeclaringType))
                 {
                     dynamic dynamicAccessor = propertyAccessor;
-                    LoadForInheritedType(dynamicAccessor, propertyEntities, reusableQuery);
+                    LoadForInheritedType(entityPool, dynamicAccessor, propertyEntities, reusableQuery);
                 }
                 else
                 {
@@ -145,7 +149,7 @@ namespace LinqToDB.Include
                   (Expression.AndAlso(expr1.Body, invokedExpr), expr1.Parameters);
         }
 
-        private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query)
+        private static void LoadForInheritedType<T>(EntityPool entityPool, IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query)
             where T : class
         {
             var accessorImpl = (PropertyAccessor<T>)accessor;
@@ -153,7 +157,7 @@ namespace LinqToDB.Include
             var entitiesOfType = propertyEntities.OfType<T>().ToList();
             var queryOfType = query.OfType<T>();
 
-            accessorImpl.Load(entitiesOfType, queryOfType);
+            accessorImpl.Load(entityPool, entitiesOfType, queryOfType);
         }
 
         internal AssociationDescriptor AssociationDescriptor { get; }

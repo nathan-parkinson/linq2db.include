@@ -1,4 +1,5 @@
-﻿using LinqToDB.Mapping;
+﻿using LinqToDB.Include.Setters;
+using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,16 +50,21 @@ namespace LinqToDB.Include
 
         public void LoadMap(List<TClass> entities, IQueryable<TClass> query)
         {
+            var entityPool = new EntityPool();
+            var deDupe = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), entities);
+            entities.Clear();
+            entities.AddRange(deDupe);
+
             foreach (var propertyAccessor in Properties.OrderBy(x => x.PropertyName))
             {
                 if (propertyAccessor is PropertyAccessor<TClass> accessorImpl)
                 {
-                    accessorImpl.Load(entities, query);
+                    accessorImpl.Load(entityPool, entities, query);
                 }
                 else if (typeof(TClass).IsAssignableFrom(propertyAccessor.DeclaringType))
                 {
                     dynamic dynamicAccessor = propertyAccessor;
-                    LoadForInheritedType(dynamicAccessor, entities, query);
+                    LoadForInheritedType(entityPool, dynamicAccessor, entities, query);
                 }
                 else
                 {
@@ -67,7 +73,7 @@ namespace LinqToDB.Include
             }
         }
 
-        private static void LoadForInheritedType<T>(IPropertyAccessor<T> accessor, List<TClass> propertyEntities, IQueryable<TClass> query)
+        private static void LoadForInheritedType<T>(EntityPool entityPool, IPropertyAccessor<T> accessor, List<TClass> propertyEntities, IQueryable<TClass> query)
             where T : class
         {
             var accessorImpl = (PropertyAccessor<T>)accessor;
@@ -75,7 +81,7 @@ namespace LinqToDB.Include
             var entitiesOfType = propertyEntities.OfType<T>().ToList();
             var queryOfType = query.OfType<T>();
 
-            accessorImpl.Load(entitiesOfType, queryOfType);
+            accessorImpl.Load(entityPool, entitiesOfType, queryOfType);
         }
 
 
