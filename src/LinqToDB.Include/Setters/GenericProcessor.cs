@@ -18,15 +18,20 @@ namespace LinqToDB.Include.Setters
 
         }
 
-        internal static List<T> ProcessEntities<T>(EntityPool queryPool, IDataContext db, IEnumerable<T> entities) 
+        internal static List<T> ProcessEntities<T>(EntityPool entityPool, IDataContext db, IEnumerable<T> entities) 
             where T : class
         {
+            if(!entityPool.ConsolidateEntities)
+            {
+                return entities.ToList();
+            }
+
             var type = typeof(T);
             
             var processor = _processors.GetOrAdd(type, t => new GenericProcessor<T>());            
             var runProcessor = processor as IGenericProcessor<T>;
             
-            return runProcessor.Process(queryPool, db, entities).ToList();
+            return runProcessor.Process(entityPool, db, entities).ToList();
         }
 
         protected static Type GetRealBaseType(Type type)

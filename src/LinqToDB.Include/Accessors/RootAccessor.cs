@@ -51,6 +51,7 @@ namespace LinqToDB.Include
         public void LoadMap(List<TClass> entities, IQueryable<TClass> query)
         {
             var entityPool = new EntityPool();
+
             var deDupe = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), entities);
             entities.Clear();
             entities.AddRange(deDupe);

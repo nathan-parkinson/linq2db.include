@@ -12,7 +12,8 @@ namespace LinqToDB.Include.Setters
     class EntityPool
     {
         private readonly Dictionary<Type, ITypePool> _typeBag = new Dictionary<Type, ITypePool>();
-        
+        internal readonly bool ConsolidateEntities = Settings.ConsolidateEntities;
+
         internal ILookup<int, T> GetEntitiesOfType<T, TBase>(Func<T, int> fkFunc)
             where TBase : class
             where T : class, TBase

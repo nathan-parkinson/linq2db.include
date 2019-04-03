@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("LinqToDB.Include.Tests")]
 namespace LinqToDB.Include
 {
     public static class IncludeExtensions
