@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("LinqToDB.Include.Tests")]
 namespace LinqToDB.Include
 {
     public static class IncludeExtensions
@@ -21,6 +23,11 @@ namespace LinqToDB.Include
             where TClass : class
             where TProperty : class
                 => includable.AddExpression(expr, propertyFilter);
+
+
+        public static IIncludableQueryable<TClass> ToIncludableQueryable<TClass>(this IQueryable<TClass> query) 
+            where TClass : class
+            => new IncludableQueryable<TClass>(query);
 
         /*
         public static List<TClass> ToList<TClass>(this IIncludableQueryable<TClass> includable)

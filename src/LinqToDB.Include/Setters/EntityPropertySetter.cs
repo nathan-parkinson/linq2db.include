@@ -226,7 +226,18 @@ namespace LinqToDB.Include
             Constant = 1
         }
 
-        private static Expression<Func<T, int>> CreateHashCodeExpression<T>(IEnumerable<KeyHolder> propertyNames) where T : class
+        internal static Expression<Func<T, int>> CreateHashCodeExpression<T>(IEnumerable<string> propertyNames) 
+            where T : class
+        {
+            return CreateHashCodeExpression<T>(propertyNames.Select(x => new KeyHolder
+            {
+                Type = KeyType.Property,
+                Key = x
+            }));
+        }
+
+        private static Expression<Func<T, int>> CreateHashCodeExpression<T>(IEnumerable<KeyHolder> propertyNames) 
+            where T : class
         {
             var param2 = Expression.Parameter(typeof(T), "p");
             Expression exp = Expression.Constant(17, typeof(int));
