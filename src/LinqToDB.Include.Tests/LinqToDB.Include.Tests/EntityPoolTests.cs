@@ -19,66 +19,60 @@ namespace Tests
         {
             DataConnection.DefaultSettings = DataConnection.DefaultSettings ?? new DBConnection();
         }
-
-
-
-
-
+        
         [Test]
         public void DuplicateEntitiesReducedTest()
         {
             using (var db = new DBContext(_mapping1))
             {
-                AddData(db);
-                
-                var query = from q in db.People
-                            select new ProductLine
-                            {
-                                OrderId = 1,
-                                ProductCode = "123",
-                                ProductId = 3,
-                                ProductLineId = 44,
-                                ProductLineType = ProductLineType.Normal
-                            };
-                
-                var p = query.ToIncludableQueryable().ToList();
-                
-                Assert.AreEqual(p.ElementAt(0), p.ElementAt(1));
+                var builder = Enumerable.Range(1, 10).Select(x => new Person
+                {
+                    Dob = DateTime.MinValue.AddDays(x),
+                    FirstName = "FirstName " + x,
+                    LastName = "LastName " + x,
+                    PersonId = x,
+                    Salary = x + 1000,
+                    Weight = x + 20
+                });
+
+                var entities = builder.ToList();
+                entities.AddRange(builder);
+
+                var result = new LinqToDB.Include.Setters.EntityPool()
+                    .ProcessEntities<Person, Person>(db, entities);
+
+                Assert.AreEqual(result.ElementAt(0), result.ElementAt(10));
             }
         }
-        
-        private static void AddData(DBContext db)
+
+
+
+        [Test]
+        public void DuplicateEntitiesWithInheritanceReducedTest()
         {
-            var person = new Person
+            using (var db = new DBContext(_mapping1))
             {
-                FirstName = "Jane",
-                LastName = "Jones",
-                Dob = new DateTime(2011, 11, 10)
-            };
+                var builder = Enumerable.Range(1, 10).Select(x => new ExtendedProductLine
+                {
+                    OrderId = 1,
+                    ProductCode = "ProductCode " + x,
+                    ProductLineId = x,
+                    ProductId = x % 2 == 0 ? x : x - 1,
+                    ProductLineType = ProductLineType.Extended
+                });
 
-            person.PersonId = db.InsertWithInt32Identity(person);
+                var entities = builder.ToList();
+                entities.AddRange(builder);
 
-            var personOther = new Person
-            {
-                FirstName = "Jim",
-                LastName = "Jones",
-                Dob = new DateTime(2001, 12, 10),
-                SpouseId = person.PersonId
-            };
+                var result = new LinqToDB.Include.Setters.EntityPool()
+                    .ProcessEntities<ExtendedProductLine, ProductLine>(db, entities);
 
-            db.Insert(personOther);
-
-            var orders = Enumerable.Range(1, 200).Select(x => new Order
-            {
-                PersonId = x % 2 == 0 ? person.PersonId : personOther.PersonId,
-                OrderNumber = x.ToString().PadLeft(5, '0'),
-                OrderedOn = DateTime.Now
-
-            });
-
-            db.BulkCopy(new BulkCopyOptions { BulkCopyType = BulkCopyType.MultipleRows }, orders);
+                Assert.AreEqual(result.ElementAt(0), result.ElementAt(10));
+            }
         }
 
+
+        
         private Action<FluentMappingBuilder> _mapping1 = builder =>
         {
             builder.Entity<Person>()
@@ -107,24 +101,19 @@ namespace Tests
                 .Association(x => x.FirstPerson, (pl, p) => p.PersonId == 1);
 
         };
-        
+
         public class DBContext : DataConnection
         {
             public DBContext(Action<FluentMappingBuilder> mappings) : base("DBConn")
             {
+                
                 var schema = new MappingSchema();
                 var builder = schema.GetFluentMappingBuilder();
 
                 mappings?.Invoke(builder);
 
-                this.AddMappingSchema(schema);
-
-                this.CreateTable<Person>();
-                this.CreateTable<Order>();
+                this.AddMappingSchema(schema);   
             }
-
-            public ITable<Person> People => GetTable<Person>();
-            public ITable<Order> Orders => GetTable<Order>();
         }
     }
 }
