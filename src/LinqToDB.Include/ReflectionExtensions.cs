@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LinqToDB.Include.Cache;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,6 +12,13 @@ namespace LinqToDB.Include
 {
     static class ReflectionExtensions
     {
+        readonly static ConcurrentDictionary<PropertySetterKey, IPropertySetterCache> _propertySetterCache =
+            new ConcurrentDictionary<PropertySetterKey, IPropertySetterCache>();
+
+        readonly static ConcurrentDictionary<PropertySetterKey, IPropertySetterCache> _collectionSetterCache =
+            new ConcurrentDictionary<PropertySetterKey, IPropertySetterCache>();
+
+
         internal static Type GetTypeToUse(this Type type)
         {
             if (type.IsGenericType)
@@ -36,7 +45,7 @@ namespace LinqToDB.Include
                     var def = type.GetGenericTypeDefinition();
 
                     return def == typeof(IEnumerable<>) || type.GetGenericTypeDefinition().GetInterfaces()
-                                .Any(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>));                    
+                                .Any(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
                 }
 
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
@@ -47,26 +56,34 @@ namespace LinqToDB.Include
 
             return false;
         }
-        
+
         internal static Action<TElement, TValue> CreatePropertySetter<TElement, TValue>(
             this Type elementType, string propertyName)
         {
-            var pi = elementType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-            var mi = pi.GetSetMethod();
+            var key = new PropertySetterKey(elementType, typeof(TValue), propertyName);
+            var setter = _propertySetterCache.GetOrAdd(key, k =>
+            {
+                var pi = k.ElementType.GetProperty(k.PropertyName, BindingFlags.Public | BindingFlags.Instance);
+                var mi = pi.GetSetMethod();
 
-            var oParam = Expression.Parameter(elementType, "obj");
-            var vParam = Expression.Parameter(typeof(TValue), "val");
-            var mce = Expression.Call(oParam, mi, vParam);
-            var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
+                var oParam = Expression.Parameter(k.ElementType, "obj");
+                var vParam = Expression.Parameter(k.ValueType, "val");
+                var mce = Expression.Call(oParam, mi, vParam);
+                var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
+                
+                return new PropertySetterCache<TElement, TValue>(action.Compile());
+            });
 
-            return action.Compile();
+            var typedSetter = setter as PropertySetterCache<TElement, TValue>;
+            return typedSetter?.Setter;
         }
-
+        
         internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(
                 this Type elementType, string propertyName, Type propertyType)
         {
+            /*
             var oParam = Expression.Parameter(elementType, "obj");
-            var vParam = Expression.Parameter(typeof(TValue), "val");
+            var vParam = Expression.Parameter( typeof(TValue), "val");
             var mce = Expression.Call(
                             Expression.Convert(
                                 Expression.Property(oParam, propertyName)
@@ -76,14 +93,35 @@ namespace LinqToDB.Include
             var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
 
             return action.Compile();
+            */
+            
+            var key = new PropertySetterKey(elementType, typeof(TValue), propertyName);
+
+            var setter = _collectionSetterCache.GetOrAdd(key, k =>
+            {
+                var oParam = Expression.Parameter(k.ElementType, "obj");
+                var vParam = Expression.Parameter(k.ValueType, "val");
+                var mce = Expression.Call(
+                                Expression.Convert(
+                                    Expression.Property(oParam, k.PropertyName)
+                                , typeof(ICollection<TValue>))
+                          , typeof(ICollection<TValue>).GetMethod("Add"), vParam);
+
+                var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
+
+                return new PropertySetterCache<TElement, TValue>(action.Compile());
+            });
+            
+            var typedSetter = setter as PropertySetterCache<TElement, TValue>;
+            return typedSetter?.Setter;            
         }
 
 
 
-        internal static Action<TParent> CreatePropertySetup<TParent, TChild>(this Type itemType, string propertyName) 
-            where TParent : class 
+        internal static Action<TParent> CreatePropertySetup<TParent, TChild>(this Type itemType, string propertyName)
+            where TParent : class
             where TChild : class
-        {   
+        {
             var pi = itemType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
             var tChildType = pi.PropertyType;
@@ -111,7 +149,7 @@ namespace LinqToDB.Include
 
             var mi = pi.GetSetMethod();
             var mce = Expression.Call(parentParam, mi, newCollection);
-            
+
             var @if = Expression.IfThen(isParamNull, mce);
 
             var finalCode = Expression.Lambda<Action<TParent>>(@if, parentParam);
@@ -148,7 +186,7 @@ namespace LinqToDB.Include
                 {
                     typeNum = def.GetInterfaces()
                                 .Where(x => x.IsGenericType)
-                                .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 : 
+                                .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 :
                                             x.GetGenericTypeDefinition() == typeof(IList<>) ? 2 : 3);
                 }
             }
@@ -156,7 +194,7 @@ namespace LinqToDB.Include
             {
                 typeNum = def.GetInterfaces()
                            .Where(t => t.IsGenericType)
-                           .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 : 
+                           .Min(x => x.GetGenericTypeDefinition() == typeof(ISet<>) ? 1 :
                                             x.GetGenericTypeDefinition() == typeof(IList<>) ? 2 : 3);
             }
 
