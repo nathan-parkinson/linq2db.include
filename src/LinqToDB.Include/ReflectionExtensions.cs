@@ -17,8 +17,10 @@ namespace LinqToDB.Include
 
         readonly static ConcurrentDictionary<PropertySetterKey, IPropertySetterCache> _collectionSetterCache =
             new ConcurrentDictionary<PropertySetterKey, IPropertySetterCache>();
-
-
+        
+        readonly static ConcurrentDictionary<PropertySetterKey, ICollectionInitializer> _collectionInitialiserCache = 
+            new ConcurrentDictionary<PropertySetterKey, ICollectionInitializer>();
+        
         internal static Type GetTypeToUse(this Type type)
         {
             if (type.IsGenericType)
@@ -80,21 +82,7 @@ namespace LinqToDB.Include
         
         internal static Action<TElement, TValue> CreateCollectionPropertySetter<TElement, TValue>(
                 this Type elementType, string propertyName, Type propertyType)
-        {
-            /*
-            var oParam = Expression.Parameter(elementType, "obj");
-            var vParam = Expression.Parameter( typeof(TValue), "val");
-            var mce = Expression.Call(
-                            Expression.Convert(
-                                Expression.Property(oParam, propertyName)
-                            , typeof(ICollection<TValue>))
-                      , typeof(ICollection<TValue>).GetMethod("Add"), vParam);
-
-            var action = Expression.Lambda<Action<TElement, TValue>>(mce, oParam, vParam);
-
-            return action.Compile();
-            */
-            
+        {            
             var key = new PropertySetterKey(elementType, typeof(TValue), propertyName);
 
             var setter = _collectionSetterCache.GetOrAdd(key, k =>
@@ -122,41 +110,51 @@ namespace LinqToDB.Include
             where TParent : class
             where TChild : class
         {
-            var pi = itemType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            var key = new PropertySetterKey(itemType, typeof(TChild), propertyName);
 
-            var tChildType = pi.PropertyType;
-            var parentParam = Expression.Parameter(itemType, "p");
-            var property = Expression.Property(parentParam, propertyName);
-
-            var isParamNull = Expression.Equal(property, Expression.Constant(null));
-
-            var collectionTypeToCreate = GetTypeToCreate(tChildType);
-            if (collectionTypeToCreate.GetConstructor(Type.EmptyTypes) == null)
+            var setter = _collectionInitialiserCache.GetOrAdd(key, k =>
             {
-                throw new ArgumentException("Collection must have a parameterless constructor. Try instantiating " +
-                    "the item in the owners ctor");
-            }
 
-            Expression newCollection = null;
-            if (collectionTypeToCreate.IsGenericTypeDefinition)
-            {
-                newCollection = Expression.New(collectionTypeToCreate.MakeGenericType(new Type[] { typeof(TChild) }));
-            }
-            else
-            {
-                newCollection = Expression.New(collectionTypeToCreate);
-            }
+                var pi = itemType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
 
-            var mi = pi.GetSetMethod();
-            var mce = Expression.Call(parentParam, mi, newCollection);
+                var tChildType = pi.PropertyType;
+                var parentParam = Expression.Parameter(itemType, "p");
+                var property = Expression.Property(parentParam, propertyName);
 
-            var @if = Expression.IfThen(isParamNull, mce);
+                var isParamNull = Expression.Equal(property, Expression.Constant(null));
 
-            var finalCode = Expression.Lambda<Action<TParent>>(@if, parentParam);
+                var collectionTypeToCreate = GetTypeToCreate(tChildType);
+                if (collectionTypeToCreate.GetConstructor(Type.EmptyTypes) == null)
+                {
+                    throw new ArgumentException("Collection must have a parameterless constructor. Try instantiating " +
+                        "the item in the owners ctor");
+                }
 
-            return finalCode.Compile();
+                Expression newCollection = null;
+                if (collectionTypeToCreate.IsGenericTypeDefinition)
+                {
+                    newCollection = Expression.New(collectionTypeToCreate.MakeGenericType(new Type[] { typeof(TChild) }));
+                }
+                else
+                {
+                    newCollection = Expression.New(collectionTypeToCreate);
+                }
+
+                var mi = pi.GetSetMethod();
+                var mce = Expression.Call(parentParam, mi, newCollection);
+
+                var @if = Expression.IfThen(isParamNull, mce);
+
+                var finalCode = Expression.Lambda<Action<TParent>>(@if, parentParam);
+
+                return new CollectionInitializer<TParent>(finalCode.Compile());
+            });
+
+            var typesSetter = setter as CollectionInitializer<TParent>;
+
+            return typesSetter?.Initializer;
         }
-
+        
         private static Type GetTypeToCreate(Type type)
         {
             if (type.IsClass && !type.IsAbstract)
