@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LinqToDB.Include.Cache;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,6 +12,9 @@ namespace LinqToDB.Include.Setters
 {
     class EntityPool
     {
+        readonly static ConcurrentDictionary<Type, IBaseTypeHashCode> _typeHasCodeCache =
+            new ConcurrentDictionary<Type, IBaseTypeHashCode>();
+        
         private readonly Dictionary<Type, ITypePool> _typeBag = new Dictionary<Type, ITypePool>();
         internal readonly bool ConsolidateEntities = Settings.ConsolidateEntities;
 
@@ -46,8 +50,14 @@ namespace LinqToDB.Include.Setters
                 return entities;
             }
 
-            var pkExpression = EntityPropertySetter.CreateHashCodeExpression<TBase>(pkFields);
-            var pkFunc = pkExpression.Compile();
+            var pkHasher = _typeHasCodeCache.GetOrAdd(baseType, k =>
+            {
+                var expr = EntityPropertySetter.CreateHashCodeExpression<TBase>(pkFields);
+                return new BaseTypeHashCode<TBase>(expr.Compile());
+            });
+
+            var pkTypeHaster = pkHasher as BaseTypeHashCode<TBase>;
+            var pkFunc = pkTypeHaster.HashCodeFunc;
 
             if (!_typeBag.ContainsKey(baseType))
             {
