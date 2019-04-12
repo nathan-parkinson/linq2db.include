@@ -58,8 +58,8 @@ namespace LinqToDB.Include
                     OtherKeys = otherKeys.ToList(),
                     ThisType = typeof(TParent),
                     ThisKeys = thisKeys.ToList()
-                }, k => new FKHashCodeFunc<TParent, TChild>(CreateHashCodeExpression<TParent>(thisKeys).Compile(),
-                                    CreateHashCodeExpression<TChild>(otherKeys).Compile(),
+                }, k => new FKHashCodeFunc<TParent, TChild>(CreateGetHashCodeFunc<TParent>(thisKeys),
+                                    CreateGetHashCodeFunc<TChild>(otherKeys),
                                     predicate.Compile()));
 
                 var typeHasher = hasher as FKHashCodeFunc<TParent, TChild>;
@@ -183,48 +183,78 @@ namespace LinqToDB.Include
             return val;
         }
         
-        internal static Expression<Func<T, int>> CreateHashCodeExpression<T>(IEnumerable<string> propertyNames)
+        internal static Func<T, int> CreateHashCodeExpression<T>(IEnumerable<string> propertyNames)
             where T : class
         {
-            return CreateHashCodeExpression<T>(propertyNames.Select(x => new KeyHolder
+            return CreateGetHashCodeFunc<T>(propertyNames.Select(x => new KeyHolder
             {
                 Type = KeyType.Property,
                 Key = x
             }));
         }
-
-        private static Expression<Func<T, int>> CreateHashCodeExpression<T>(IEnumerable<KeyHolder> propertyNames)
-            where T : class
+        
+        private static Func<T, int> CreateGetHashCodeFunc<T>(IEnumerable<KeyHolder> members) where T : class
         {
-            var param2 = Expression.Parameter(typeof(T), "p");
-            Expression exp = Expression.Constant(17, typeof(int));
+            var expVar = Expression.Variable(typeof(int), "hashCode");
+            var assign = Expression.Assign(expVar, Expression.Constant(-984676295));
+
+
             var type = typeof(T);
-            foreach (var prop in propertyNames)
+
+            var exps = new List<Expression> { assign };
+            var expConst = Expression.Constant(-1521134295);
+            var param = Expression.Parameter(type, "param");
+
+
+            foreach (var prop in members)
             {
+                var ex1 = Expression.MultiplyAssign(expVar, expConst);
+                exps.Add(ex1);
 
                 switch (prop.Type)
                 {
                     case KeyType.Property:
-
-                        var property = type.GetProperty(prop.Key);
-                        exp = Expression.Call(typeof(EntityPropertySetter), nameof(MakeHashCode), new Type[]
                         {
-                            property.PropertyType
-                        }, exp, Expression.Property(param2, property));
+                            var property = type.GetProperty(prop.Key);
+                            Expression propertyValue = Expression.PropertyOrField(param, prop.Key);
+                            var getHashCode = Expression.Call(propertyValue, property.PropertyType.GetMethod(nameof(object.GetHashCode), new Type[0]));
+
+                            if (property.PropertyType.IsClass)
+                            {
+                                var isNotNull = Expression.NotEqual(propertyValue, Expression.Constant(null, property.PropertyType));
+                                exps.Add(Expression.IfThen(isNotNull, Expression.AddAssign(expVar, getHashCode)));
+                            }
+                            else
+                            {
+                                exps.Add(Expression.AddAssign(expVar, getHashCode));
+                            }
+                        }
                         break;
                     case KeyType.Constant:
-
-                        exp = Expression.Call(typeof(EntityPropertySetter), nameof(MakeHashCode), new Type[]
+                        if (prop.Constant.Value != null)
                         {
-                            prop.Constant.Type
-                        }, exp, prop.Constant);
+                            var getHashCode = Expression.Call(prop.Constant, prop.Constant.Type.GetMethod(nameof(object.GetHashCode), new Type[0]));
+                            exps.Add(Expression.AddAssign(expVar, getHashCode));
+                        }
+
                         break;
                     default:
                         break;
                 }
+
             }
 
-            var func = Expression.Lambda<Func<T, int>>(exp, param2);
+            var returnTarget = Expression.Label(typeof(int));
+            var returnExpression = Expression.Return(returnTarget, expVar, typeof(int));
+            var returnLabel = Expression.Label(returnTarget, Expression.Constant(0));
+            exps.Add(returnExpression);
+            exps.Add(returnLabel);
+
+            var block = Expression.Block(new List<ParameterExpression> { expVar }, exps);
+
+            var lamdba = Expression.Lambda<Func<T, int>>(block, param);
+            var func = lamdba.Compile();
+
             return func;
         }
     }
