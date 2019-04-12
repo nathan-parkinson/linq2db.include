@@ -52,8 +52,8 @@ namespace LinqToDB.Include.Setters
 
             var pkHasher = _typeHasCodeCache.GetOrAdd(baseType, k =>
             {
-                var expr = EntityPropertySetter.CreateHashCodeExpression<TBase>(pkFields);
-                return new BaseTypeHashCode<TBase>(expr.Compile());
+                var func = EntityPropertySetter.CreateHashCodeExpression<TBase>(pkFields);
+                return new BaseTypeHashCode<TBase>(func);
             });
 
             var pkTypeHaster = pkHasher as BaseTypeHashCode<TBase>;
