@@ -169,19 +169,6 @@ namespace LinqToDB.Include
                 }
             }
         }
-
-        private static int MakeHashCode<T>(int val, T property)
-        {
-            if (property != null)
-            {
-                unchecked
-                {
-                    val = val * 23 + property.GetHashCode();
-                }
-            }
-
-            return val;
-        }
         
         internal static Func<T, int> CreateHashCodeExpression<T>(IEnumerable<string> propertyNames)
             where T : class
