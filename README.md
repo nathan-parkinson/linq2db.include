@@ -154,12 +154,10 @@ var jobQuery  = from p in query
 
 These are high level ideas at this stage and may or may not be possible\implemented.
 
-* Complete custom override system to allow developer to insert custom code to load and match up child entities
-* Add unit tests
-* ThenInclude
 * Automatically match up back references
-* Async
-* Cache compiled Func objects for better performance
+* Complete custom override system to allow developer to insert custom code to load and match up child entities
+* Add more unit tests
+* ThenInclude
 
 ## License
 

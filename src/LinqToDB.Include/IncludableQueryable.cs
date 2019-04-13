@@ -58,7 +58,24 @@ namespace LinqToDB.Include
             => LinqToDBQuery.ExecuteAsync<TResult>(expression);
 
         async Task<TResult> IQueryProviderAsync.ExecuteAsync<TResult>(Expression expression, CancellationToken token)
-            => await LinqToDBQuery.ExecuteAsync<TResult>(expression, token);
+        {
+            var entity = await LinqToDBQuery.ExecuteAsync<TResult>(expression, token);
+
+            if (entity is T tEntity)
+            {
+                var db = this.GetDataContext<IDataContext>();
+                var resultingQuery = Internals.CreateExpressionQueryInstance<TResult>(db, expression);
+
+                var queryToPass = from x in this
+                                  where
+                                    x == resultingQuery
+                                  select x;
+
+                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+            }
+            
+            return entity;
+        }
 
 
         public Type ElementType => LinqToDBQuery.ElementType;
