@@ -103,6 +103,137 @@ namespace Tests
 
 
         [Test]
+        public void KeyExtractionNotNotEqualTest()
+        {
+            
+            Expression<Func<Person, Order, bool>> exp = (p, o) => !(p.PersonId != o.PersonId);
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+            Assert.AreEqual(1, thisKeys.Count);
+            Assert.AreEqual(1, otherKeys.Count);
+
+            Assert.AreEqual((thisKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((otherKeys.First() as MemberExpression).Member, typeof(Order).GetMember(nameof(Order.PersonId)).First());
+        }
+
+
+        [Test]
+        public void KeyExtractionNotNotEqualTest2()
+        {
+
+            Expression<Func<Person, Person, bool>> exp = (p, o) => !(p.PersonId != o.PersonId || p.FirstName != o.FirstName);
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+            Assert.IsEmpty(thisKeys);
+            Assert.IsEmpty(otherKeys);
+        }
+
+        [Test]
+        public void KeyExtractionNotNotEqualTest3()
+        {
+
+            Expression<Func<Person, Person, bool>> exp = (p, o) => !(p.PersonId != o.PersonId && p.FirstName != o.FirstName);
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+            Assert.AreEqual(2, thisKeys.Count);
+            Assert.AreEqual(2, otherKeys.Count);
+
+            Assert.AreEqual((thisKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((otherKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((thisKeys.ElementAt(1) as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.FirstName)).First());
+            Assert.AreEqual((otherKeys.ElementAt(1) as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.FirstName)).First());
+        }
+
+        [Test]
+        public void KeyExtractionNotNotEqualTest4()
+        {
+
+            Expression<Func<Person, Person, bool>> exp = (p, o) => !(p.PersonId != o.PersonId && p.FirstName == o.FirstName);
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+
+            Assert.AreEqual(1, thisKeys.Count);
+            Assert.AreEqual(1, otherKeys.Count);
+
+            Assert.AreEqual((thisKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((otherKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+        }
+
+
+
+        [Test]
+        public void KeyExtractionNotNotEqualTest5()
+        {
+
+            Expression<Func<Person, Person, bool>> exp = (p, o) => !(p.PersonId != o.PersonId && p.Dob < o.Dob);
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+
+            Assert.AreEqual(1, thisKeys.Count);
+            Assert.AreEqual(1, otherKeys.Count);
+
+            Assert.AreEqual((thisKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((otherKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+        }
+
+
+
+        [Test]
+        public void KeyExtractionNotNotEqualTest6()
+        {
+
+            Expression<Func<Person, Person, bool>> exp = (p, o) => !(p.PersonId != o.PersonId) && p.Dob < o.Dob;
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+
+            Assert.AreEqual(1, thisKeys.Count);
+            Assert.AreEqual(1, otherKeys.Count);
+
+            Assert.AreEqual((thisKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((otherKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+        }
+
+
+        [Test]
+        public void KeyExtractionNotNotEqualTest7()
+        {
+
+            Expression<Func<Person, Person, bool>> exp = (p, o) => !(p.PersonId != o.PersonId) && p.Dob == o.Dob;
+
+            var result = EntityMatchWalker.ExtractKeyNodes(exp, exp.Parameters.First(), exp.Parameters.ElementAt(1));
+
+            var thisKeys = result.Item1;
+            var otherKeys = result.Item2;
+
+            Assert.AreEqual(2, thisKeys.Count);
+            Assert.AreEqual(2, otherKeys.Count);
+
+            Assert.AreEqual((thisKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((otherKeys.First() as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.PersonId)).First());
+            Assert.AreEqual((thisKeys.ElementAt(1) as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.Dob)).First());
+            Assert.AreEqual((otherKeys.ElementAt(1) as MemberExpression).Member, typeof(Person).GetMember(nameof(Person.Dob)).First());
+        }
+
+
+        [Test]
         public void EntityMatchWithNoEqualsPartToOnClause()
         {
             using (var db = new DBContext(_mapping4))

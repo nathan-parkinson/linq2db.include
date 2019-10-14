@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace LinqToDB.Include
 {
-    public class EntityMatchWalker : ExpressionVisitor
+    public sealed class EntityMatchWalker : ExpressionVisitor
     {
-        private bool _ignore = false;
-        private bool _isNot = false;
+        private bool _ignore;
+        private bool _isNot;
 
         private Expression _expression;
 
@@ -34,12 +34,11 @@ namespace LinqToDB.Include
             return Tuple.Create(walker._thisKey, walker._otherKey);
         }
 
-        private static ExpressionType[] _validAccessors = { ExpressionType.MemberAccess, ExpressionType.Constant };
-
+        private readonly static ExpressionType[] _validAccessors = { ExpressionType.MemberAccess, ExpressionType.Constant };
 
         private void AddKeysToList(BinaryExpression node)
         {
-            if (node.NodeType == ExpressionType.Equal)
+            if (!(_isNot && node.NodeType == ExpressionType.Equal) || (_isNot && node.NodeType == ExpressionType.NotEqual))
             {
                 bool? isLeftThisKey = null;
                 switch (node.Left)
@@ -69,7 +68,7 @@ namespace LinqToDB.Include
                 if (!isLeftThisKey.HasValue)
                 {
                     throw new ArgumentException($"At least one part of '{nameof(BinaryExpression)}' must " +
-                        $"relate to table field");
+                        "relate to table field");
                 }
 
                 if (isLeftThisKey.HasValue)
@@ -91,9 +90,10 @@ namespace LinqToDB.Include
 
             _ignore = _ignore || node.NodeType == ExpressionType.OrElse;
 
-            if(!_ignore && !_isNot)
+            if(!_ignore)
             {
-                if(node.NodeType == ExpressionType.Equal && 
+                if(((!_isNot && node.NodeType == ExpressionType.Equal) ||
+                    (_isNot && node.NodeType == ExpressionType.NotEqual)) &&
                     _validAccessors.Contains(node.Right.NodeType) &&
                     _validAccessors.Contains(node.Left.NodeType))
                 {
