@@ -1,4 +1,5 @@
-﻿using LinqToDB.Include.Setters;
+﻿using ExpressionKey;
+using LinqToDB.Include.Setters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace LinqToDB.Include
         protected bool _isMemberTypeIEnumerable;
         protected bool _isMemberEntityTypeIEnumerable;
 
-        internal abstract void Load(EntityPool entityPool, List<TClass> entities, IQueryable<TClass> query);
+        internal abstract void Load(IEntityPool entityPool, List<TClass> entities, IQueryable<TClass> query);
 
         public string PropertyName { get => _propertyName; }
         public Type DeclaringType { get => _declaringType; }

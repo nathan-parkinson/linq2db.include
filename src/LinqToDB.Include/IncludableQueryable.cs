@@ -1,4 +1,5 @@
 ﻿using LinqToDB.Async;
+using LinqToDB.Include.Setters;
 using LinqToDB.Linq;
 using System;
 using System.Collections;
@@ -15,7 +16,8 @@ namespace LinqToDB.Include
     public class IncludableQueryable<T> : IIncludableQueryable<T> where T : class
     {
         private readonly IRootAccessor<T> _rootAccessor;
-
+        private readonly Builder _builder;
+        
         internal IncludableQueryable(IQueryable<T> query)
         {
             LinqToDBQuery = query as IExpressionQuery<T>;
@@ -26,6 +28,7 @@ namespace LinqToDB.Include
 
             var context = query.GetDataContext<IDataContext>();
             _rootAccessor = new RootAccessor<T>(context.MappingSchema);
+            _builder = new Builder(context.MappingSchema);
         }
 
         internal IncludableQueryable(IQueryable<T> query, IRootAccessor<T> rootAccessor)
@@ -38,6 +41,7 @@ namespace LinqToDB.Include
 
             var context = query.GetDataContext<IDataContext>();
             _rootAccessor = rootAccessor;
+            _builder = new Builder(context.MappingSchema);
         }
 
         public IIncludableQueryable<T> AddExpression<TProperty>(
@@ -71,7 +75,7 @@ namespace LinqToDB.Include
                                     x == resultingQuery
                                   select x;
 
-                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass, _builder);
             }
             
             return entity;
@@ -162,7 +166,7 @@ namespace LinqToDB.Include
                                     x == resultingQuery
                                   select x;
                 
-                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+                _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass, _builder);
             }
             
             return entity;
@@ -182,7 +186,7 @@ namespace LinqToDB.Include
                                     x == resultingQuery
                                   select x;
 
-                 _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass);
+                 _rootAccessor.LoadMap(new List<T> { tEntity }, queryToPass, _builder);
             }
 
             return entity;
@@ -191,7 +195,7 @@ namespace LinqToDB.Include
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             var entities = LinqToDBQuery.ToList();
-            _rootAccessor.LoadMap(entities, this);
+            _rootAccessor.LoadMap(entities, this, _builder);
 
             return entities.GetEnumerator();
         }
@@ -199,7 +203,7 @@ namespace LinqToDB.Include
         IEnumerator IEnumerable.GetEnumerator()
         {
             var entities = LinqToDBQuery.ToList();
-            _rootAccessor.LoadMap(entities, this);
+            _rootAccessor.LoadMap(entities, this, _builder);
 
             return ((IEnumerable)entities).GetEnumerator();
         }
