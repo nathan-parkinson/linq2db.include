@@ -25,6 +25,11 @@ namespace LinqToDB.Include
         {
             if (type.IsGenericType)
             {
+                if (type.IsInterface && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    return type.GetGenericArguments()[0];
+                }
+
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
 
                 if (genericTypeDefinition.GetInterfaces()
@@ -204,6 +209,22 @@ namespace LinqToDB.Include
                     return typeof(List<>);
                 default:
                     return typeof(Collection<>);
+            }
+        }
+
+
+        internal static Type GetMemberUnderlyingType(this MemberInfo member)
+        {
+            switch (member.MemberType)
+            {
+                case MemberTypes.Field:
+                    return ((FieldInfo)member).FieldType;
+                case MemberTypes.Property:
+                    return ((PropertyInfo)member).PropertyType;
+                case MemberTypes.Event:
+                    return ((EventInfo)member).EventHandlerType;
+                default:
+                    throw new ArgumentException("MemberInfo must be if type FieldInfo, PropertyInfo or EventInfo", nameof(member));
             }
         }
     }

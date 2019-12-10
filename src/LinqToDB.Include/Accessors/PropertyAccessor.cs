@@ -1,4 +1,5 @@
-﻿using LinqToDB.Include.Setters;
+﻿using ExpressionKey;
+using LinqToDB.Include.Setters;
 using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;
@@ -86,7 +87,7 @@ namespace LinqToDB.Include
 
         }
 
-        internal override void Load(EntityPool entityPool, List<TClass> entities, IQueryable<TClass> query)
+        internal override void Load(IEntityPool entityPool, List<TClass> entities, IQueryable<TClass> query)
         {
             if(!(entities?.Any() ?? false))
             {
@@ -94,9 +95,13 @@ namespace LinqToDB.Include
             }
             //get query
             var propertyEntities = ExecuteQuery(query);
+            //entityPool.AddEntities(propertyEntities);
+
+            propertyEntities = entityPool.GetEntities(propertyEntities).Distinct().ToList();
+
             //TODO add test here to make sure that it doesn't need the same deDupe process 
             //adding that was used in LoadMap (i.e. .Clear .AddRange)
-            propertyEntities = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), propertyEntities);
+            //propertyEntities = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), propertyEntities);
             
             IQueryable<TProperty> reusableQuery = null;
             //run nested properties
@@ -126,7 +131,10 @@ namespace LinqToDB.Include
 
             //set values to entities           
             //TODO change this to a cached Func
-            this.SetField(entities, propertyEntities);
+
+            //Could it be so easy as to not call this when using entity pool?
+
+           // this.SetField(entities, propertyEntities);
         }
 
         private Expression<Func<TProperty, bool>> _propertyFilter;
@@ -149,7 +157,7 @@ namespace LinqToDB.Include
                   (Expression.AndAlso(expr1.Body, invokedExpr), expr1.Parameters);
         }
 
-        private static void LoadForInheritedType<T>(EntityPool entityPool, IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query)
+        private static void LoadForInheritedType<T>(IEntityPool entityPool, IPropertyAccessor<T> accessor, List<TProperty> propertyEntities, IQueryable<TProperty> query)
             where T : class
         {
             var accessorImpl = (PropertyAccessor<T>)accessor;

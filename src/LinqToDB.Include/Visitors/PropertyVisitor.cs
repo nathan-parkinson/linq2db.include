@@ -123,11 +123,16 @@ namespace LinqToDB.Include
         {
             if (type.IsGenericType)
             {
+                if (type.IsInterface && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                {
+                    return type.GetGenericArguments()[0];
+                }
+
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
 
-                if (genericTypeDefinition == typeof(IEnumerable<>) ||
-                    genericTypeDefinition.GetInterfaces().Any(t => t.IsGenericType &&
-                                                t.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+                if (genericTypeDefinition.GetInterfaces()
+                            .Any(t => t.IsGenericType &&
+                                      t.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
                 {
                     return type.GetGenericArguments()[0];
                 }

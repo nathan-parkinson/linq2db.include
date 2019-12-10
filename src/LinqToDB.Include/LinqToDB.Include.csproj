@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net45;netcoreapp2.0;netstandard2.0</TargetFrameworks>    
+    <TargetFrameworks>netcoreapp2.0;netstandard2.0</TargetFrameworks>    
     <LangVersion>7.3</LangVersion>
 
     <PackageId>linq2db.include</PackageId>
@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ExpressionKey" Version="1.0.3" />
     <PackageReference Include="linq2db" Version="2.4.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
@@ -76,6 +77,12 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="ExpressionKey">
+      <Version>1.0.1</Version>
+    </PackageReference>
   </ItemGroup>
 
 
