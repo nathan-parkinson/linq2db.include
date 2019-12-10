@@ -95,13 +95,11 @@ namespace LinqToDB.Include
             }
             //get query
             var propertyEntities = ExecuteQuery(query);
-            //entityPool.AddEntities(propertyEntities);
-
+           
             propertyEntities = entityPool.GetEntities(propertyEntities).Distinct().ToList();
 
             //TODO add test here to make sure that it doesn't need the same deDupe process 
             //adding that was used in LoadMap (i.e. .Clear .AddRange)
-            //propertyEntities = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), propertyEntities);
             
             IQueryable<TProperty> reusableQuery = null;
             //run nested properties
@@ -128,13 +126,6 @@ namespace LinqToDB.Include
                     throw new PropertyAccessorNotFoundException($"PropertyAccessor<{typeof(TProperty).Name}> not found");
                 }
             }
-
-            //set values to entities           
-            //TODO change this to a cached Func
-
-            //Could it be so easy as to not call this when using entity pool?
-
-           // this.SetField(entities, propertyEntities);
         }
 
         private Expression<Func<TProperty, bool>> _propertyFilter;
