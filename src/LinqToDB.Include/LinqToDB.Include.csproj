@@ -1,13 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0;netstandard2.0</TargetFrameworks>    
+    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>7.3</LangVersion>
 
     <PackageId>linq2db.include</PackageId>
-    <PackageTags>Linq2DB;Linq;SQL;EagerLoading;EntityMap;Include;LoadWith</PackageTags>    
+    <PackageTags>Linq2DB Linq SQL EagerLoading EntityMap Include LoadWith</PackageTags>    
     <PackageProjectUrl>https://github.com/nathan-parkinson/linq2db.include</PackageProjectUrl>
     <PackageLicense>https://github.com/nathan-parkinson/linq2db.include/blob/master/LICENSE</PackageLicense>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Version>1.0.0-beta.1</Version>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright 2019</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -17,73 +20,5 @@
   <ItemGroup>
     <PackageReference Include="ExpressionKey" Version="1.0.3" />
     <PackageReference Include="linq2db" Version="2.4.0" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
-
-
-
-  <!-- .NET Framework -->
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451' ">
-    <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Data.Services" />
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.Web.Services" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Runtime.Serialization" />
-
-    <Compile Remove="Metadata\SystemComponentModelDataAnnotationsSchemaAttributeReader.cs" />
-  </ItemGroup>
-
-
-  <!-- .NET Standard -->
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="4.4.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
-
-    <Compile Remove="Metadata\SystemDataLinqAttributeReader.cs" />
-    <Compile Remove="Metadata\SystemDataSqlServerAttributeReader.cs" />
-    <Compile Remove="Configuration\DataProviderElement.cs;Configuration\DataProviderElementCollection.cs;Configuration\ElementBase.cs;Configuration\ElementCollectionBase.cs;Configuration\LinqToDBSection.cs" />
-    <Compile Remove="DataProvider\Access\*.cs;DataProvider\SapHana\SapHanaOdbc*.cs" />
-    <Compile Remove="**\*SchemaProvider11111*.cs" />
-  </ItemGroup>
-
-
-  <!-- .NET Core -->
-
-  <PropertyGroup Condition="'$(TargetFramework)'=='netcoreapp2.0'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD2_0</DefineConstants>
-  </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
-    <PackageReference Include="System.ComponentModel.Annotations" Version="4.4.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.5.1" />
-
-    <Compile Remove="Metadata\SystemDataLinqAttributeReader.cs" />
-    <Compile Remove="Metadata\SystemDataSqlServerAttributeReader.cs" />
-    <Compile Remove="Configuration\DataProviderElement.cs;Configuration\DataProviderElementCollection.cs;Configuration\ElementBase.cs;Configuration\ElementCollectionBase.cs;Configuration\LinqToDBSection.cs" />
-    <Compile Remove="ServiceModel\**\*.cs;" />
-    <Compile Remove="DataProvider\Access\*.cs;DataProvider\SapHana\SapHanaOdbc*.cs" />
-    <Compile Remove="**\*SchemaProvider11111*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="ExpressionKey">
-      <Version>1.0.1</Version>
-    </PackageReference>
-  </ItemGroup>
-
-
 </Project>
