@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.136
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinqToDB.Include", "src\LinqToDB.Include\LinqToDB.Include.csproj", "{293883CE-2A56-4914-87E8-556B373C7A83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinqToDB.Include.Tests", "src\LinqToDB.Include.Tests\LinqToDB.Include.Tests\LinqToDB.Include.Tests.csproj", "{530435D0-9845-44D2-A443-929F31B8E97B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinqToDB.Include.Tests", "src\LinqToDB.Include.Tests\LinqToDB.Include.Tests\LinqToDB.Include.Tests.csproj", "{530435D0-9845-44D2-A443-929F31B8E97B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

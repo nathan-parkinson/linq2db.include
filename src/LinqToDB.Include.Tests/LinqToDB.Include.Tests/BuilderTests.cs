@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 namespace Tests
 {
-    public class EntityPoolTests
+    public class BuidlerTests
     {
         [SetUp]
         public void Setup()
@@ -25,49 +25,8 @@ namespace Tests
         {
             using (var db = new DBContext(_mapping1))
             {
-                var builder = Enumerable.Range(1, 10).Select(x => new Person
-                {
-                    Dob = DateTime.MinValue.AddDays(x),
-                    FirstName = "FirstName " + x,
-                    LastName = "LastName " + x,
-                    PersonId = x,
-                    Salary = x + 1000,
-                    Weight = x + 20
-                });
-
-                var entities = builder.ToList();
-                entities.AddRange(builder);
-
-                var result = new LinqToDB.Include.Setters.EntityPool()
-                    .ProcessEntities<Person, Person>(db, entities);
-
-                Assert.AreEqual(result.ElementAt(0), result.ElementAt(10));
-            }
-        }
-
-
-
-        [Test]
-        public void DuplicateEntitiesWithInheritanceReducedTest()
-        {
-            using (var db = new DBContext(_mapping1))
-            {
-                var builder = Enumerable.Range(1, 10).Select(x => new ExtendedProductLine
-                {
-                    OrderId = 1,
-                    ProductCode = "ProductCode " + x,
-                    ProductLineId = x,
-                    ProductId = x % 2 == 0 ? x : x - 1,
-                    ProductLineType = ProductLineType.Extended
-                });
-
-                var entities = builder.ToList();
-                entities.AddRange(builder);
-
-                var result = new LinqToDB.Include.Setters.EntityPool()
-                    .ProcessEntities<ExtendedProductLine, ProductLine>(db, entities);
-
-                Assert.AreEqual(result.ElementAt(0), result.ElementAt(10));
+                var builder = new LinqToDB.Include.Setters.Builder(db.MappingSchema);
+               // Assert.AreEqual(result.ElementAt(0), result.ElementAt(10));
             }
         }
 

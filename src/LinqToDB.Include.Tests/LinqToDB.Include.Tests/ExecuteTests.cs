@@ -19,13 +19,34 @@ namespace Tests
             DataConnection.DefaultSettings = DataConnection.DefaultSettings ?? new DBConnection();
         }
 
+
+        [Test]
+        public void ATest()
+        {
+            using (var db = new DBContext(_mapper1))
+            {
+                AddData(db);
+                MatchUp(db.MappingSchema, typeof(Person));
+            }
+        }
+
+
+        private static void MatchUp(MappingSchema schema, Type type)
+        {
+            foreach(var association in schema.GetEntityDescriptor(type).Associations)
+            {
+                
+            }
+        }
+
+
         [Test]
         public void FirstMethodAddsIncludedEntities()
         {
             using (var db = new DBContext(_mapper1))
             {
                 AddData(db);
-
+                
                 var query = from q in db.People
                             where q.FirstName == "Jim"
                             select q;

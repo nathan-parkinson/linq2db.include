@@ -1,4 +1,5 @@
-﻿using LinqToDB.Include.Setters;
+﻿using ExpressionKey;
+using LinqToDB.Include.Setters;
 using LinqToDB.Mapping;
 using System;
 using System.Collections.Generic;
@@ -48,11 +49,14 @@ namespace LinqToDB.Include
         }
 
 
-        public void LoadMap(List<TClass> entities, IQueryable<TClass> query)
+        public void LoadMap(List<TClass> entities, IQueryable<TClass> query, Builder builder = null)
         {
-            var entityPool = new EntityPool();
 
-            var deDupe = GenericProcessor.ProcessEntities(entityPool, query.GetDataContext<IDataContext>(), entities);
+            var entityPool = builder.CreateEntityPool();
+            entityPool.AddEntities(entities);
+
+            var deDupe = entityPool.GetAllEntities<TClass>();
+            
             entities.Clear();
             entities.AddRange(deDupe);
 
@@ -74,7 +78,7 @@ namespace LinqToDB.Include
             }
         }
 
-        private static void LoadForInheritedType<T>(EntityPool entityPool, IPropertyAccessor<T> accessor, List<TClass> propertyEntities, IQueryable<TClass> query)
+        private static void LoadForInheritedType<T>(IEntityPool entityPool, IPropertyAccessor<T> accessor, List<TClass> propertyEntities, IQueryable<TClass> query)
             where T : class
         {
             var accessorImpl = (PropertyAccessor<T>)accessor;

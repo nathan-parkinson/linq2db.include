@@ -150,15 +150,6 @@ var jobQuery  = from p in query
                     p.LastName = "Smith"
                 select p.CurrentJob;
 ```
-## Roadmap
-
-These are high level ideas at this stage and may or may not be possible\implemented.
-
-* Automatically match up back references
-* Complete custom override system to allow developer to insert custom code to load and match up child entities
-* Add more unit tests
-* ThenInclude
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details

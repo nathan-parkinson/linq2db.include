@@ -209,7 +209,7 @@ namespace LinqToDB.Include
             return Expression.Lambda(predicate.Body, parentParam, childParam);
         }
 
-        private static Expression<Func<TChild, TParent, bool>> BuildJoinExpression<TParent, TChild>(
+        internal static Expression<Func<TChild, TParent, bool>> BuildJoinExpression<TParent, TChild>(
                 PropertyAccessor<TParent, TChild> schema)
             where TParent : class
             where TChild : class
